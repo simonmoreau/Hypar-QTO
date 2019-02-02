@@ -1,19 +1,13 @@
 {
     "$schema": "https://raw.githubusercontent.com/hypar-io/generator/master/hypar-schema.json",
-    "description": "The Hypar starter generator.",
-    "function_id": "hypar-dotnet-starter",
-    "name": "Hypar Starter",
+    "description": "A generator for building a simplified model for Quantity TakeOff.",
+    "function_id": "bim42-hypar-qto",
+    "name": "Hypar QTO",
     "inputs": {
-        "height": {
-            "min": 1.0,
-            "max": 10.0,
-            "step": 1.0,
-            "description": "The height of the object.",
-            "type": "range"
-        },
-        "location" : {
-            "description": "The location of the object on the planet Earth.",
-            "type": "location"
+        "data" : {
+            "description": "A json file representing the outline of your building.",
+            "type": "data",
+            "content_type": "application/json"
         }
     },
     "outputs": {
@@ -22,5 +16,5 @@
             "type": "number"
         }
     },
-    "repository_url": "https://github.com/hypar-io/generator"
+    "repository_url": "https://github.com/simonmoreau/Hypar-QTO"
 }

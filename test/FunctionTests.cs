@@ -14,43 +14,7 @@ namespace test
     /// </summary>
     public class FunctionTest
     {
-        // Some test data that replicates the payload sent to your function.
-        private const string _testData = @"{
-                ""height"": 20.0,
-                ""location"": [
-                    {
-                        ""geometry"": {
-                        ""type"": ""Polygon"",
-                        ""coordinates"": [
-                            [
-                                [
-                                    -96.78204,
-                                    32.78411
-                                ],
-                                [
-                                    -96.78191,
-                                    32.78359
-                                ],
-                                [
-                                    -96.78050,
-                                    32.78383
-                                ],
-                                [
-                                    -96.78063,
-                                    32.78438
-                                ],
-                                [
-                                    -96.78204,
-                                    32.78411
-                                ]
-                            ]
-                        ]
-                    },
-                    ""type"": ""Feature"",
-                    ""properties"": {}
-                }
-            ]
-            }";
+        
 
         private Input _data;
 
@@ -58,6 +22,8 @@ namespace test
         {
             var serializer = new Amazon.Lambda.Serialization.Json.JsonSerializer();
             
+            // Some test data that replicates the payload sent to your function.
+            string _testData = File.ReadAllText(@"C:\Users\Simon\Github\Hypar\qto\test\outline.json");
             // Construct a stream from our test data to replicate how Hypar 
             // will get the data.
             using (var stream = GenerateStreamFromString(_testData))
