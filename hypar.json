@@ -1,20 +1,20 @@
 {
-    "$schema": "https://raw.githubusercontent.com/hypar-io/generator/master/hypar-schema.json",
-    "description": "A generator for building a simplified model for Quantity TakeOff.",
-    "function_id": "bim42-hypar-qto",
-    "name": "Hypar QTO",
-    "inputs": {
-        "data" : {
-            "description": "A json file representing the outline of your building.",
-            "type": "data",
-            "content_type": "application/json"
-        }
-    },
-    "outputs": {
-        "area": {
-            "description": "The area of the mass.",
-            "type": "number"
-        }
-    },
-    "repository_url": "https://github.com/simonmoreau/Hypar-QTO"
+  "$schema": "https://hypar.io/schemas/function.json",
+  "description": "A generator for building a simplified model for Quantity TakeOff.",
+  "function_id": "bim42-hypar-qto",
+  "name": "Hypar QTO",
+  "inputs": {
+    "data": {
+      "description": "A csv file representing the outline of your building.",
+      "type": "data",
+      "content_type": "text/csv"
+    }
+  },
+  "outputs": {
+    "area": {
+      "description": "The area of the project.",
+      "type": "number"
+    }
+  },
+  "repository_url": "https://github.com/simonmoreau/Hypar-QTO"
 }

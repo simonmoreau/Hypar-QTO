@@ -1,20 +1,58 @@
 using Hypar;
-using Hypar.Elements;
-using Hypar.Geometry;
+using Elements;
+using Elements.Geometry;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using Xunit;
+using Bim42HyparQto;
+using Elements.Serialization.glTF;
 
-namespace test
+namespace Bim42HyparQto
 {
     /// <summary>
     /// This test suite simulates the execution of your function when running on Hypar.
     /// </summary>
     public class FunctionTest
     {
-        
+        // Some test data that replicates the payload sent to your function.
+        private const string _testData = @"{
+                ""height"": 50.0,
+                ""location"": [
+                    {
+                        ""geometry"": {
+                        ""type"": ""Polygon"",
+                        ""coordinates"": [
+                            [
+                                [
+                                    -96.78204,
+                                    32.78411
+                                ],
+                                [
+                                    -96.78191,
+                                    32.78359
+                                ],
+                                [
+                                    -96.78050,
+                                    32.78383
+                                ],
+                                [
+                                    -96.78063,
+                                    32.78438
+                                ],
+                                [
+                                    -96.78204,
+                                    32.78411
+                                ]
+                            ]
+                        ]
+                    },
+                    ""type"": ""Feature"",
+                    ""properties"": {}
+                }
+            ]
+            }";
 
         private Input _data;
 
@@ -22,8 +60,6 @@ namespace test
         {
             var serializer = new Amazon.Lambda.Serialization.Json.JsonSerializer();
             
-            // Some test data that replicates the payload sent to your function.
-            string _testData = File.ReadAllText(@"C:\Users\Simon\Github\Hypar\qto\test\outline.json");
             // Construct a stream from our test data to replicate how Hypar 
             // will get the data.
             using (var stream = GenerateStreamFromString(_testData))
@@ -33,33 +69,29 @@ namespace test
 
             // Add a model to the input to simulate a model
             // passing from a previous execution.
-            _data.Model = new Model();
-            var spaceProfile = new Profile(Polygon.Rectangle(Vector3.Origin, 2, 2));
-            var space = new Space(spaceProfile, 0, 2);
-            _data.Model.AddElement(space);
+            // _data.Model = new Model();
+            // var spaceProfile = new Profile(Polygon.Rectangle(2, 2));
+            // var space = new Space(spaceProfile, 2, 0);
+            // _data.Model.AddElement(space);
         }
 
         [Fact]
-        public void Test()
+        public async void Test()
         {
             // Execute the function.
+            // As part of the execution, the model will be
+            // written to /<tmp>/<execution_id>_model.glb
             var func = new Function();
-            var output = func.Handler(_data, null);
+            var output = await func.Handler(_data, null);
 
-            Assert.NotNull(_data.Model);
+            Assert.NotNull(output.Model);
+
+            // Output the model to the live directory.
+            // This will enable 
+            output.Model.ToGlTF("../../../../live/models/model.glb");
 
             // Check that the computed values are as expected.
-            var computed = (Dictionary<string,object>)output["computed"];
-            Assert.True(Math.Abs((double)computed["area"]) > 0.0);
-
-            var model = Model.FromJson(output["elements"].ToString());
-            model.SaveGltf("model.gltf");
-
-            // Serialize the results to json, so we can preview the results.
-            // When Lambda runs the function, this is not necessary because it
-            // handles serializing the result to a stream.
-            // var json = JsonConvert.SerializeObject(output);
-            // Console.WriteLine(json);
+            Assert.True(Math.Abs(output.Area) > 0.0);
         }
 
         private static Stream GenerateStreamFromString(string s)
