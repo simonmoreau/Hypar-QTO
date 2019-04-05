@@ -2,6 +2,9 @@
   "name": "live",
   "version": "1.0.0",
   "description": "A live server to test your Hypar function.",
+  "scripts": {
+    "start": "node node_modules\\live-server\\live-server.js"   
+  },
   "author": "",
   "license": "MIT",
   "devDependencies": {

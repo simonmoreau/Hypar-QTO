@@ -25,7 +25,7 @@ namespace Bim42HyparQto
             Polygon levelOutline = new Polygon(points.ToArray());
             Profile profile = new Profile(levelOutline);
 
-            Mass mass = new Mass(profile, 10, null);
+            Mass mass = new Mass(profile, 1, null);
             // Add your mass element to a new Model.
             model.AddElement(mass);
             area = area + mass.Profile.Perimeter.Area;
