@@ -1,7 +1,9 @@
 using Elements;
 using Elements.Geometry;
+using System;
 using System.Linq;
 using System.Collections.Generic;
+using Bim42HyparQto.Outline;
 
 namespace Bim42HyparQto
 {
@@ -14,41 +16,119 @@ namespace Bim42HyparQto
         {
             List<Newtonsoft.Json.Linq.JObject> values = input.Data[0].Cast<Newtonsoft.Json.Linq.JObject>().ToList();
 
-						foreach (Newtonsoft.Json.Linq.JObject value in values) 
-						{
-							Newtonsoft.Json.Linq.JToken dataline = value.Children().First();
-							
-							string test = dataline.First.ToString().Split(',')[3];
-						}
-						
+            List<Outline.Line> baseLines = values.Select(value => new Outline.Line(value.Children().First().First.ToString())).ToList();
+
+            Dictionary<Level, List<Outline.Line>> baseLinesByLevel = baseLines.GroupBy(x => x.Level.Name)
+                                                            .ToDictionary(x => x.First().Level, x => x.ToList());
+
+
             // Create a model
             Model model = new Model();
             double area = 0;
 
-            List<Vector3> points = new List<Vector3>();
-            points.Add(new Vector3(0, 0, 0));
-            points.Add(new Vector3(0, 10, 0));
-            points.Add(new Vector3(10, 12, 0));
-            points.Add(new Vector3(10, 2, 0));
+            baseLinesByLevel.Keys.ElementAt(baseLinesByLevel.Keys.Count-1).Height = 1;
 
-            Polygon levelOutline = new Polygon(points.ToArray());
-            Profile profile = new Profile(levelOutline);
+            for (int i = 0;i<baseLinesByLevel.Keys.Count-1;i++)
+            {
+                baseLinesByLevel.Keys.ElementAt(i).Height = baseLinesByLevel.Keys.ElementAt(i+1).Elevation - baseLinesByLevel.Keys.ElementAt(i).Elevation;
+            }
 
-            Mass mass = new Mass(profile, 1, null);
-            // Add your mass element to a new Model.
-            model.AddElement(mass);
-            area = area + mass.Profile.Perimeter.Area;
+            foreach (Level level in baseLinesByLevel.Keys)
+            {
+                List<Outline.Line> facades = baseLinesByLevel[level].Where(l => l.LineType == "facade").ToList();
+                List<Polygon> polygons = CreatePolygonsFromLines(facades);
+                Polygon perimeter = polygons[0];
+                polygons.RemoveAt(0);
+                Polygon[] voids = polygons.ToArray();
+                Profile levelProfile = null;
+                if (voids.Length != 0)
+                {
+                    levelProfile = new Profile(perimeter, voids, level.Name);
+                }
+                else
+                {
+                    levelProfile = new Profile(perimeter, level.Name);
+                }
+
+                Transform levelTransform = new Transform(0,0,level.Elevation);
+                Mass levelMass = new Mass(levelProfile,level.Height, null,levelTransform);
+                
+
+                area = area + levelMass.Profile.Perimeter.Area;
+                // Add your mass element to a new Model.
+                model.AddElement(levelMass);
+
+            }
 
             return new Output(model, area); ;
         }
+
+        public List<Polygon> CreatePolygonsFromLines(List<Outline.Line> lines)
+        {
+            List<Vector3> points = new List<Vector3>();
+            List<Polygon> polygons = new List<Polygon>();
+            Outline.Line nextLine = lines[0];
+
+            Vector3EqualityComparer compare = new Vector3EqualityComparer();
+
+            while (lines.Count != 0)
+            {
+                nextLine = lines[0];
+                while (nextLine != null)
+                {
+                    points.Add(nextLine.Start);
+                    lines.Remove(nextLine);
+                    Vector3 anglePoint = nextLine.End;
+                    nextLine = lines.FirstOrDefault(l => compare.Equals(l.Start, anglePoint) || compare.Equals(l.End, anglePoint));
+                    if (nextLine == null)
+                    {
+                        break;
+                    }
+                    if (compare.Equals(anglePoint, nextLine.End))
+                    {
+                        nextLine = nextLine.Reversed();
+                    }
+                }
+                Polygon polygon = new Polygon(points.ToArray());
+                if (polygon.Area < 0) { polygon = polygon.Reversed(); }
+                if (polygon.Area != 0) { polygons.Add(polygon); }
+
+                points.Clear();
+            }
+
+            polygons = polygons.OrderByDescending(p => p.Area).ToList();
+
+            return polygons;
+        }
+
     }
 
-    public class dataline
+    class Vector3EqualityComparer : IEqualityComparer<Vector3>
     {
-			public dataline()
-			{
+        public bool Equals(Vector3 v1, Vector3 v2)
+        {
+            if (v2 == null && v1 == null)
+                return true;
+            else if (v1 == null || v2 == null)
+                return false;
+            else if (v1.X == v2.X && v1.Y == v2.Y
+                                && v1.Z == v2.Z)
+                return true;
+            else
+                return false;
+        }
 
-			}
-			public string levels {get;set;}
+        public int GetHashCode(Vector3 bx)
+        {
+            unchecked // Overflow is fine, just wrap
+            {
+                int hash = 17;
+                // Suitable nullity checks etc, of course :)
+                hash = hash * 23 + bx.X.GetHashCode();
+                hash = hash * 23 + bx.Y.GetHashCode();
+                hash = hash * 23 + bx.Z.GetHashCode();
+                return hash;
+            }
+        }
     }
 }
