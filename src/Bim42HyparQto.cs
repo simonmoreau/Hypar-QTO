@@ -26,11 +26,18 @@ namespace Bim42HyparQto
             Model model = new Model();
             double area = 0;
 
-            baseLinesByLevel.Keys.ElementAt(baseLinesByLevel.Keys.Count-1).Height = 1;
+            //Create a floor type
+            FloorType floorType = new FloorType("Main Floor", 0.2, null);
 
-            for (int i = 0;i<baseLinesByLevel.Keys.Count-1;i++)
+            Vector3 origin = new Vector3(0, 0, 0);
+            Polygon openingPolygon = Polygon.Rectangle(1, 1, origin, 0, 0);
+            Opening opening = new Opening(openingPolygon, 0, 0);
+
+            baseLinesByLevel.Keys.ElementAt(baseLinesByLevel.Keys.Count - 1).Height = 1;
+
+            for (int i = 0; i < baseLinesByLevel.Keys.Count - 1; i++)
             {
-                baseLinesByLevel.Keys.ElementAt(i).Height = baseLinesByLevel.Keys.ElementAt(i+1).Elevation - baseLinesByLevel.Keys.ElementAt(i).Elevation;
+                baseLinesByLevel.Keys.ElementAt(i).Height = baseLinesByLevel.Keys.ElementAt(i + 1).Elevation - baseLinesByLevel.Keys.ElementAt(i).Elevation;
             }
 
             foreach (Level level in baseLinesByLevel.Keys)
@@ -40,6 +47,12 @@ namespace Bim42HyparQto
                 Polygon perimeter = polygons[0];
                 polygons.RemoveAt(0);
                 Polygon[] voids = polygons.ToArray();
+
+                List<Opening> openings = polygons.Select(p => new Opening(p, 0, 0)).ToList();
+                openings.Add(opening);
+                Floor floor = new Floor(perimeter, floorType, level.Elevation, null, null, openings.ToArray());
+
+
                 Profile levelProfile = null;
                 if (voids.Length != 0)
                 {
@@ -49,16 +62,37 @@ namespace Bim42HyparQto
                 {
                     levelProfile = new Profile(perimeter, level.Name);
                 }
-
-                Transform levelTransform = new Transform(0,0,level.Elevation);
-                Mass levelMass = new Mass(levelProfile,level.Height, null,levelTransform);
-                
+                Transform levelTransform = new Transform(0, 0, level.Elevation);
+                Mass levelMass = new Mass(levelProfile, level.Height, null, levelTransform);
 
                 area = area + levelMass.Profile.Perimeter.Area;
                 // Add your mass element to a new Model.
                 model.AddElement(levelMass);
+                model.AddElement(floor);
 
             }
+
+            // //Create a vertical opening on every floor
+            // Vector3 origin = new Vector3(0, 0, 0);
+            // Polygon openingPolygon = Polygon.Rectangle(1, 1, origin, 0, 0);
+            // Mass openingMass = new Mass(new Profile(openingPolygon, null), 10, null, null);
+            // model.AddElement(openingMass);
+
+            // List<Floor> newFloors = new List<Floor>();
+            // foreach (Floor floor in model.ElementsOfType<Floor>())
+            // {
+            //     Opening opening = new Opening(openingPolygon, 0, 0);
+            //     List<Opening> openings = new List<Opening>();
+            //     openings.Add(opening);
+            //     if (floor.Openings != null)
+            //     {
+            //         openings.AddRange(floor.Openings);
+            //     }
+
+            //     Floor newFloor = new Floor(floor.ProfileTransformed.Perimeter, floor.ElementType, floor.Elevation, null, floor.Transform, openings.ToArray());
+            //     newFloors.Add(newFloor);
+            // }
+
 
             return new Output(model, area); ;
         }
