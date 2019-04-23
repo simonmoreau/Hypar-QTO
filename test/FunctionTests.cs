@@ -63,7 +63,7 @@ namespace Bim42HyparQto
             // Construct a stream from our test data to replicate how Hypar 
             // will get the data.
             string data = File.ReadAllText(@"..\..\..\input.json");
-            using (var stream = GenerateStreamFromString(data))
+            using (var stream = GenerateStreamFromString(_testData))
             {
                 _data = serializer.Deserialize<Input>(stream);
             }

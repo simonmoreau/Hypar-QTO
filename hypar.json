@@ -3,18 +3,27 @@
   "description": "A generator for building a simplified model for Quantity TakeOff.",
   "function_id": "bim42-hypar-qto",
   "name": "Hypar QTO",
-  "inputs": {
-    "data": {
-      "description": "A csv file representing the outline of your building.",
-      "type": "data",
-      "content_type": "text/csv"
-    }
-  },
-  "outputs": {
-    "area": {
-      "description": "The area of the project.",
-      "type": "number"
-    }
-  },
+	"inputs": [
+		{
+			"name": "height",
+			"min": 1.0,
+			"max": 10.0,
+			"step": 1.0,
+			"description": "The height of the object.",
+			"type": "range"
+		},
+		{
+			"name": "location",
+			"description": "The location of the object on the planet Earth.",
+			"type": "location"
+		}
+	],
+	"outputs": [
+		{
+			"name": "area",
+			"description": "The area of the mass.",
+			"type": "number"
+		}
+	],
   "repository_url": "https://github.com/simonmoreau/Hypar-QTO"
 }

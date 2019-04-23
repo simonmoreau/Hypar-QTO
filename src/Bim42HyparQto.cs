@@ -3,7 +3,6 @@ using Elements.Geometry;
 using System;
 using System.Linq;
 using System.Collections.Generic;
-using Bim42HyparQto.Outline;
 
 namespace Bim42HyparQto
 {
@@ -12,86 +11,97 @@ namespace Bim42HyparQto
     /// </summary>
   	public class Bim42HyparQto
     {
+
+        public double building_width = 18.5;
+        public double building_lenght;
+        public double core_width = 5;
+        public double module_lenght = 1.35;
         public Output Execute(Input input)
         {
-            List<Newtonsoft.Json.Linq.JObject> values = input.Data[0].Cast<Newtonsoft.Json.Linq.JObject>().ToList();
-
-            List<Outline.Line> baseLines = values.Select(value => new Outline.Line(value.Children().First().First.ToString())).ToList();
-
-            Dictionary<Level, List<Outline.Line>> baseLinesByLevel = baseLines.GroupBy(x => x.Level.Name)
-                                                            .ToDictionary(x => x.First().Level, x => x.ToList());
-
 
             // Create a model
             Model model = new Model();
             double area = 0;
 
-            //Create a floor type
-            FloorType floorType = new FloorType("Main Floor", 0.2, null);
+            //Set building lenght
+            int module_number = 20;
+            building_lenght = module_lenght * module_number;
 
-            Vector3 origin = new Vector3(0, 0, 0);
-            Polygon openingPolygon = Polygon.Rectangle(1, 1, origin, 0, 0);
-            Opening opening = new Opening(openingPolygon, 0, 0);
+            double level_height = 3.5;
 
-            baseLinesByLevel.Keys.ElementAt(baseLinesByLevel.Keys.Count - 1).Height = 1;
+            //Set structural dimensions
+            double beam_height = 0.7; //full dimension, including slab thickness
+            double slab_height = 0.2;
+            double column_diameter = 0.5;
+            double facade_thickness = 0.4;
 
-            for (int i = 0; i < baseLinesByLevel.Keys.Count - 1; i++)
+            //Create wall and floor types
+            FloorType slabType = new FloorType("slab", slab_height, null);
+            FloorType raisedFloorype = new FloorType("Raised floor", 0.03, null);
+
+            WallType facadeType = new WallType("façade", facade_thickness, "façade");
+
+            Line topAxe = new Line(new Vector3(0, building_width, 0), new Vector3(building_lenght, building_width, 0));
+            Line bottomAxe = new Line(new Vector3(0, 0, 0), new Vector3(building_lenght, 0, 0));
+
+            Grid grid = new Grid(bottomAxe, topAxe, module_number, 3);
+            int maxRow = grid.Cells().GetLength(1) - 1;
+
+            for (int i = 0; i < grid.Cells().GetLength(0); i++)
             {
-                baseLinesByLevel.Keys.ElementAt(i).Height = baseLinesByLevel.Keys.ElementAt(i + 1).Elevation - baseLinesByLevel.Keys.ElementAt(i).Elevation;
-            }
+                Vector3[] bottomCell = grid.Cells()[i, 0];
+                Vector3[] topCell = grid.Cells()[i, 0];
 
-            foreach (Level level in baseLinesByLevel.Keys)
-            {
-                List<Outline.Line> facades = baseLinesByLevel[level].Where(l => l.LineType == "facade").ToList();
-                List<Polygon> polygons = CreatePolygonsFromLines(facades);
-                Polygon perimeter = polygons[0];
-                polygons.RemoveAt(0);
-                Polygon[] voids = polygons.ToArray();
+                //Create a façade
+                Vector3 facadeOffset = new Vector3(0,facade_thickness/2,0);
+                Line bottomBaseLine = new Line(bottomCell[0]+facadeOffset, bottomCell[3]+facadeOffset);
+                Wall bottomWall = new Wall(bottomBaseLine, facadeType, level_height, BuiltInMaterials.Glass, null, null);
+                model.AddElement(bottomWall);
 
-                List<Opening> openings = polygons.Select(p => new Opening(p, 0, 0)).ToList();
-                openings.Add(opening);
-                Floor floor = new Floor(perimeter, floorType, level.Elevation, null, null, openings.ToArray());
+                Vector3 innerOffset = new Vector3(0,facade_thickness,0);
+                Vector3[] innerCell = new Vector3[] {bottomCell[0] + innerOffset,bottomCell[1],bottomCell[2],bottomCell[3] + innerOffset};
+                //Create a slab
+                Polygon bottomPolygon = new Polygon(innerCell);
+                Floor bottomFloor = new Floor(bottomPolygon, slabType, level_height, BuiltInMaterials.Steel, null, null);
+                model.AddElement(bottomFloor);
+                area = area + bottomFloor.Area();
+
+                //Create a raised floor
+                Floor raisedFloor = new Floor(bottomPolygon, raisedFloorype, 0.13, BuiltInMaterials.Wood, null, null);
+                model.AddElement(raisedFloor);
 
 
-                Profile levelProfile = null;
-                if (voids.Length != 0)
+
+                //Create a beam each 3 module
+                Math.DivRem(i, 3, out int remainer);
+                if (remainer == 0)
                 {
-                    levelProfile = new Profile(perimeter, voids, level.Name);
-                }
-                else
-                {
-                    levelProfile = new Profile(perimeter, level.Name);
-                }
-                Transform levelTransform = new Transform(0, 0, level.Elevation);
-                Mass levelMass = new Mass(levelProfile, level.Height, null, levelTransform);
+                    //Create columns
+                    Profile circularColumnProfile = new Profile(Polygon.Circle(column_diameter / 2));
+                    double column_height = level_height - beam_height;
+                    Column circularColumn = new Column(innerCell[0] + new Vector3(0, 0.5, 0), column_height, circularColumnProfile, BuiltInMaterials.Steel, null, 0, 0);
+                    model.AddElement(circularColumn);
 
-                area = area + levelMass.Profile.Perimeter.Area;
-                // Add your mass element to a new Model.
-                model.AddElement(levelMass);
-                model.AddElement(floor);
+                    //Create beams
+                    Profile beamProfile = new Profile(Polygon.Rectangle(column_diameter - 0.2, beam_height - slab_height));
+                    Vector3 beamElevation = new Vector3(0, 0, level_height - slab_height - (beam_height - slab_height) / 2);
+                    Line beamLine = new Line(innerCell[0] + beamElevation, innerCell[1] + beamElevation);
 
+
+                    Beam beam = new Beam(beamLine, beamProfile, BuiltInMaterials.Steel);
+                    model.AddElement(beam);
+                }
+
+                Polygon topPolygon = new Polygon(grid.Cells()[i, maxRow]);
+                Floor topFloor = new Floor(topPolygon, slabType, 0, null, null, null);
+                model.AddElement(topFloor);
+
+                Line topBaseLine = new Line(grid.Cells()[i, maxRow][1], grid.Cells()[i, maxRow][2]);
+                Wall topWall = new Wall(topBaseLine, facadeType, level_height, BuiltInMaterials.Glass, null, null);
+                model.AddElement(topWall);
+
+                area = area + topFloor.Area();
             }
-
-            // //Create a vertical opening on every floor
-            // Vector3 origin = new Vector3(0, 0, 0);
-            // Polygon openingPolygon = Polygon.Rectangle(1, 1, origin, 0, 0);
-            // Mass openingMass = new Mass(new Profile(openingPolygon, null), 10, null, null);
-            // model.AddElement(openingMass);
-
-            // List<Floor> newFloors = new List<Floor>();
-            // foreach (Floor floor in model.ElementsOfType<Floor>())
-            // {
-            //     Opening opening = new Opening(openingPolygon, 0, 0);
-            //     List<Opening> openings = new List<Opening>();
-            //     openings.Add(opening);
-            //     if (floor.Openings != null)
-            //     {
-            //         openings.AddRange(floor.Openings);
-            //     }
-
-            //     Floor newFloor = new Floor(floor.ProfileTransformed.Perimeter, floor.ElementType, floor.Elevation, null, floor.Transform, openings.ToArray());
-            //     newFloors.Add(newFloor);
-            // }
 
 
             return new Output(model, area); ;
