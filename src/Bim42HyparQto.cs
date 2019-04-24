@@ -41,70 +41,105 @@ namespace Bim42HyparQto
             Model model = new Model();
             double area = 0;
             building_lenght = module_lenght * module_number;
-            level_height = 
-            raised_floor_void_height + 
+            level_height =
+            raised_floor_void_height +
             raised_floor_thickness +
             headspace +
             ceiling_thickness +
             ceiling_void_height +
             beam_height;
 
+            double office_space_width = (building_width - core_width) / 2;
 
-            Line topAxe = new Line(new Vector3(0, building_width, 0), new Vector3(building_lenght, building_width, 0));
-            Line bottomAxe = new Line(new Vector3(0, 0, 0), new Vector3(building_lenght, 0, 0));
+            Line northFacadeLine = new Line(new Vector3(0, building_width, 0), new Vector3(building_lenght, building_width, 0));
+            Line northInnerLine = new Line(new Vector3(0, office_space_width + core_width, 0), new Vector3(building_lenght, office_space_width + core_width, 0));
 
-            Grid grid = new Grid(bottomAxe, topAxe, module_number, 3);
-            int maxRow = grid.Cells().GetLength(1) - 1;
+            Line southFacadeLine = new Line(new Vector3(0, 0, 0), new Vector3(building_lenght, 0, 0));
+            Line southInnerLine = new Line(new Vector3(0, office_space_width, 0), new Vector3(building_lenght, office_space_width, 0));
 
-            for (int i = 0; i < grid.Cells().GetLength(0); i++)
+            CreateFaçade(model, northFacadeLine, northInnerLine);
+            CreateFaçade(model, southFacadeLine, southInnerLine);
+
+            area = area + CreateOfficeSpace(model, northFacadeLine, northInnerLine, area);
+            area = area + CreateOfficeSpace(model, southFacadeLine, southInnerLine, area);
+
+            return new Output(model, area);
+        }
+
+        public double CreateOfficeSpace(Model model, Line façadeLine, Line innerLine, double area)
+        {
+            Grid spaceGrid = new Grid(façadeLine, innerLine, 1, 1);
+            Vector3[] spaceCell = spaceGrid.Cells()[0, 0];
+            //Helper vector
+            Vector3 towardInside = (spaceCell[1] - spaceCell[0]).Normalized();
+
+            Vector3 facadeOffset = towardInside * (facade_thickness);
+            Vector3 corridorOffset = towardInside * (-1.5);
+            Vector3[] officeCell = new Vector3[] { spaceCell[0] + facadeOffset, spaceCell[1] + corridorOffset, spaceCell[2] + corridorOffset, spaceCell[3] + facadeOffset };
+            Vector3[] corridorCell = new Vector3[] { spaceCell[1] + corridorOffset, spaceCell[1], spaceCell[2], spaceCell[2] + corridorOffset };
+
+            //Create a space
+            Polygon officePolygon = new Polygon(officeCell);
+            Polygon corridorPolygon = new Polygon(corridorCell);
+
+            Material MintMaterial = new Material("Mint", GeometryEx.Palette.Mint);
+            Material GreenMaterila = new Material("Green", GeometryEx.Palette.Green);
+            Space officeSpace = new Space(new Profile(officePolygon), headspace, raised_floor_thickness + raised_floor_void_height, MintMaterial, null);
+            model.AddElement(officeSpace);
+            area = area + officePolygon.Area;
+
+            Space corridorSpace = new Space(new Profile(corridorPolygon), headspace, raised_floor_thickness + raised_floor_void_height, MintMaterial, null);
+            model.AddElement(corridorSpace);
+            area = area + corridorPolygon.Area;
+
+
+            return area;
+        }
+
+        public void CreateFaçade(Model model, Line façadeLine, Line innerLine)
+        {
+            Grid moduleGrid = new Grid(façadeLine, innerLine, module_number, 1);
+
+            for (int i = 0; i < moduleGrid.Cells().GetLength(0); i++)
             {
-                Vector3[] cell = grid.Cells()[i, 0];
-                Vector3[] topCell = grid.Cells()[i, maxRow];
-                topCell = new Vector3[] { topCell[2], topCell[3], topCell[0], topCell[1] };
+                Vector3[] cell = moduleGrid.Cells()[i, 0];
 
                 //Create a beam each 3 module
                 Math.DivRem(i, 3, out int remainer);
                 if (remainer == 0)
                 {
-                    area = CreateModule(model, area, cell, true);
-                    area = CreateModule(model, area, topCell, true);
+                    CreateModule(model, cell, true);
                 }
                 else
                 {
-                    area = CreateModule(model, area, cell, false);
-                    area = CreateModule(model, area, topCell, false);
+                    CreateModule(model, cell, false);
                 }
-
             }
-
-
-            return new Output(model, area); ;
         }
 
-        public double CreateModule(Model model, double area, Vector3[] cell, bool structural)
+        public void CreateModule(Model model, Vector3[] cell, bool structural)
         {
             //Create wall and floor types
             FloorType slabType = new FloorType("slab", slab_height, null);
             FloorType raisedFloorType = new FloorType("Raised floor", raised_floor_thickness, null);
-            FloorType ceillingType = new FloorType("Ceilling", ceiling_thickness,null);
+            FloorType ceillingType = new FloorType("Ceilling", ceiling_thickness, null);
             WallType facadeType = new WallType("façade", facade_thickness, "façade");
 
             //Helper vector
-            Vector3 towardInside = (cell[1]-cell[0]).Normalized();
+            Vector3 towardInside = (cell[1] - cell[0]).Normalized();
 
             //Create a façade
-            Vector3 facadeOffset = towardInside*(facade_thickness / 2);
+            Vector3 facadeOffset = towardInside * (facade_thickness / 2);
             Line bottomBaseLine = new Line(cell[0] + facadeOffset, cell[3] + facadeOffset);
             Wall bottomWall = new Wall(bottomBaseLine, facadeType, level_height, BuiltInMaterials.Glass, null, null);
             model.AddElement(bottomWall);
 
-            Vector3 innerOffset = towardInside *(facade_thickness);
+            Vector3 innerOffset = towardInside * (facade_thickness);
             Vector3[] innerCell = new Vector3[] { cell[0] + innerOffset, cell[1], cell[2], cell[3] + innerOffset };
             //Create a slab
             Polygon innerPolygon = new Polygon(innerCell);
             Floor bottomFloor = new Floor(innerPolygon, slabType, level_height, BuiltInMaterials.Steel, null, null);
             model.AddElement(bottomFloor);
-            area = area + bottomFloor.Area();
 
             //Create a raised floor
             Floor raisedFloor = new Floor(innerPolygon, raisedFloorType, raised_floor_thickness + raised_floor_void_height, BuiltInMaterials.Wood, null, null);
@@ -112,7 +147,7 @@ namespace Bim42HyparQto
 
             //Create a ceilling
             double ceilingElevation = raised_floor_void_height + raised_floor_thickness + headspace + ceiling_thickness;
-            Floor ceilling = new Floor(innerPolygon, ceillingType, ceilingElevation , BuiltInMaterials.Wood, null, null);
+            Floor ceilling = new Floor(innerPolygon, ceillingType, ceilingElevation, BuiltInMaterials.Wood, null, null);
             model.AddElement(ceilling);
 
             if (structural)
@@ -120,7 +155,7 @@ namespace Bim42HyparQto
                 //Create columns
                 Profile circularColumnProfile = new Profile(Polygon.Circle(column_diameter / 2));
                 double column_height = level_height - beam_height;
-                Vector3 columnOffset = towardInside*0.5;
+                Vector3 columnOffset = towardInside * 0.5;
                 Column circularColumn = new Column(innerCell[0] + columnOffset, column_height, circularColumnProfile, BuiltInMaterials.Steel, null, 0, 0);
                 model.AddElement(circularColumn);
 
@@ -133,8 +168,6 @@ namespace Bim42HyparQto
                 Beam beam = new Beam(beamLine, beamProfile, BuiltInMaterials.Steel);
                 model.AddElement(beam);
             }
-
-            return area;
 
         }
 
