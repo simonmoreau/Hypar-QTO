@@ -63,7 +63,46 @@ namespace Bim42HyparQto
             area = area + CreateOfficeSpace(model, northFacadeLine, northInnerLine, area);
             area = area + CreateOfficeSpace(model, southFacadeLine, southInnerLine, area);
 
+            CreateCore(model, northInnerLine, southInnerLine);
+            
+
             return new Output(model, area);
+        }
+
+        public void CreateCore(Model model, Line northInnerLine, Line southInnerLine)
+        {
+
+            Grid coreGrid = new Grid(northInnerLine, southInnerLine, 1, 1);
+
+            Vector3[] meetingCell = new Vector3[] {
+                northInnerLine.PointAt(0.1),
+                northInnerLine.PointAt(0.4),
+                southInnerLine.PointAt(0.4),
+                southInnerLine.PointAt(0.1)
+            };
+
+            CreateMeetingRoom(model,meetingCell);
+
+            CreateFloors(model, coreGrid.Cells()[0,0]);
+        }
+
+        public void CreateMeetingRoom(Model model, Vector3[] cell)
+        {
+            WallType facadeType = new WallType("meeting", 0.1, "meeting");
+            Vector3 elevation = new Vector3(0,0,raised_floor_thickness + raised_floor_void_height);
+
+            for (int i =0; i < cell.Count();i++)
+            {
+                Vector3 startPoint = cell[i] + elevation;
+                Vector3 endPoint = cell[i] + elevation;
+                if (i== 0) {startPoint = cell[cell.Count() -1] + elevation;} else {startPoint = cell[i-1] + elevation;}
+
+                Line wallLine = new Line(startPoint, endPoint);
+
+                Wall meetingWall = new Wall(wallLine, facadeType, headspace, BuiltInMaterials.Glass);
+                model.AddElement(meetingWall);
+                
+            }
         }
 
         public double CreateOfficeSpace(Model model, Line façadeLine, Line innerLine, double area)
@@ -119,10 +158,6 @@ namespace Bim42HyparQto
 
         public void CreateModule(Model model, Vector3[] cell, bool structural)
         {
-            //Create wall and floor types
-            FloorType slabType = new FloorType("slab", slab_height, null);
-            FloorType raisedFloorType = new FloorType("Raised floor", raised_floor_thickness, null);
-            FloorType ceillingType = new FloorType("Ceilling", ceiling_thickness, null);
             WallType facadeType = new WallType("façade", facade_thickness, "façade");
 
             //Helper vector
@@ -136,19 +171,7 @@ namespace Bim42HyparQto
 
             Vector3 innerOffset = towardInside * (facade_thickness);
             Vector3[] innerCell = new Vector3[] { cell[0] + innerOffset, cell[1], cell[2], cell[3] + innerOffset };
-            //Create a slab
-            Polygon innerPolygon = new Polygon(innerCell);
-            Floor bottomFloor = new Floor(innerPolygon, slabType, level_height, BuiltInMaterials.Steel, null, null);
-            model.AddElement(bottomFloor);
-
-            //Create a raised floor
-            Floor raisedFloor = new Floor(innerPolygon, raisedFloorType, raised_floor_thickness + raised_floor_void_height, BuiltInMaterials.Wood, null, null);
-            model.AddElement(raisedFloor);
-
-            //Create a ceilling
-            double ceilingElevation = raised_floor_void_height + raised_floor_thickness + headspace + ceiling_thickness;
-            Floor ceilling = new Floor(innerPolygon, ceillingType, ceilingElevation, BuiltInMaterials.Wood, null, null);
-            model.AddElement(ceilling);
+            CreateFloors(model, innerCell);
 
             if (structural)
             {
@@ -169,6 +192,28 @@ namespace Bim42HyparQto
                 model.AddElement(beam);
             }
 
+        }
+
+        public void CreateFloors(Model model, Vector3[] cell)
+        {
+            //Create wall and floor types
+            FloorType slabType = new FloorType("slab", slab_height, null);
+            FloorType raisedFloorType = new FloorType("Raised floor", raised_floor_thickness, null);
+            FloorType ceillingType = new FloorType("Ceilling", ceiling_thickness, null);
+
+            //Create a slab
+            Polygon polygon = new Polygon(cell);
+            Floor bottomFloor = new Floor(polygon, slabType, level_height, BuiltInMaterials.Steel, null, null);
+            model.AddElement(bottomFloor);
+
+            //Create a raised floor
+            Floor raisedFloor = new Floor(polygon, raisedFloorType, raised_floor_thickness + raised_floor_void_height, BuiltInMaterials.Wood, null, null);
+            model.AddElement(raisedFloor);
+
+            //Create a ceilling
+            double ceilingElevation = raised_floor_void_height + raised_floor_thickness + headspace + ceiling_thickness;
+            Floor ceilling = new Floor(polygon, ceillingType, ceilingElevation, BuiltInMaterials.Wood, null, null);
+            model.AddElement(ceilling);
         }
 
         public List<Polygon> CreatePolygonsFromLines(List<Outline.Line> lines)
