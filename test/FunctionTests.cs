@@ -8,6 +8,7 @@ using System.IO;
 using Xunit;
 using Bim42HyparQto;
 using Elements.Serialization.glTF;
+using Elements.Serialization.IFC;
 
 namespace Bim42HyparQto
 {
@@ -90,6 +91,7 @@ namespace Bim42HyparQto
             // Output the model to the live directory.
             // This will enable 
             output.Model.ToGlTF("../../../../live/models/model.glb");
+            output.Model.ToIFC("../../../../live/models/model.ifc");
 
             // Check that the computed values are as expected.
             Assert.True(Math.Abs(output.Area) > 0.0);
