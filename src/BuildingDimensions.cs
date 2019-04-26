@@ -160,12 +160,12 @@ namespace Bim42HyparQto
     public sealed class LevelDimensions
     {
         //Set level height definition
-        private double _height = 3.5;
-        private double _ceiling_void_height = 0.05;
-        private double _ceiling_thickness = 0.05;
-        private double _raised_floor_void_height = 0.07;
-        private double _raised_floor_thickness = 0.03;
-        private double _headspace = 2.7;
+        private double _height;
+        private double _ceiling_void_height;
+        private double _ceiling_thickness;
+        private double _raised_floor_void_height;
+        private double _raised_floor_thickness;
+        private double _headspace;
         private StructuralDimensions _structuralDimensions;
         private static readonly LevelDimensions instance = new LevelDimensions();
 

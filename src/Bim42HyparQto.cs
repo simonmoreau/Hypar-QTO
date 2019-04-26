@@ -14,7 +14,6 @@ namespace Bim42HyparQto
         private BuildingDimensions dim = BuildingDimensions.Instance;
         public Output Execute(Input input)
         {
-
             // Create a model
             Model model = new Model();
             double area = 0;
@@ -92,7 +91,7 @@ namespace Bim42HyparQto
             Material MintMaterial = new Material("Mint", GeometryEx.Palette.Mint);
             Material GreenMaterila = new Material("Green", GeometryEx.Palette.Green);
             Space officeSpace = new Space(new Profile(officePolygon), dim.LevelDimensions.Headspace, dim.LevelDimensions.RaisedFloorThickness + dim.LevelDimensions.RaisedFloorVoidHeight, MintMaterial, null);
-            model.AddElement(officeSpace);
+            //model.AddElement(officeSpace);
             area = area + officePolygon.Area();
 
             Space corridorSpace = new Space(new Profile(corridorPolygon), dim.LevelDimensions.Headspace, dim.LevelDimensions.RaisedFloorThickness + dim.LevelDimensions.RaisedFloorVoidHeight, MintMaterial, null);
@@ -130,10 +129,18 @@ namespace Bim42HyparQto
             Vector3 towardInside = (cell[1] - cell[0]).Normalized();
 
             //Create a façade
+            Vector3[] facadeCell = new Vector3[] {
+                cell[0],
+                cell[0] + new Vector3(0,0,dim.LevelDimensions.Height),
+                cell[3] + new Vector3(0,0,dim.LevelDimensions.Height),
+                cell[3]
+            };
+            CreateFacadeModule(model, facadeCell, towardInside);
+
             Vector3 facadeOffset = towardInside * (dim.FacadeDimensions.FacadeThickness / 2);
             Line facadeBaseLine = new Line(cell[0] + facadeOffset, cell[3] + facadeOffset);
             Wall facadeWall = new Wall(facadeBaseLine, dim.Types.FacadeType, dim.LevelDimensions.Height, null, null);
-            model.AddElement(facadeWall);
+            //model.AddElement(facadeWall);
 
             Vector3 innerOffset = towardInside * (dim.FacadeDimensions.FacadeThickness);
             Vector3[] innerCell = new Vector3[] { cell[0] + innerOffset, cell[1], cell[2], cell[3] + innerOffset };
@@ -172,6 +179,66 @@ namespace Bim42HyparQto
             double ceilingElevation = dim.LevelDimensions.RaisedFloorVoidHeight + dim.LevelDimensions.RaisedFloorThickness + dim.LevelDimensions.Headspace + dim.LevelDimensions.CeilingThickness;
             Floor ceilling = new Floor(polygon, dim.Types.CeillingType, ceilingElevation, BuiltInMaterials.Wood, null, null);
             model.AddElement(ceilling);
+        }
+
+        public void CreateFacadeModule(Model model, Vector3[] cell, Vector3 towardInside)
+        {
+            Vector3 innerVector = towardInside * dim.FacadeDimensions.FacadeThickness;
+            Polygon cellPolygon = new Polygon(cell);
+            if (cellPolygon.Plane().Normal.Normalized().Equals(innerVector.Normalized()))
+            {
+                cell = cellPolygon.Reversed().Vertices;
+            }
+
+            Vector3[] innerCell = cell.Select(v => v + innerVector).ToArray();
+
+            Transform panelTransform = new Transform(innerCell[0], innerCell[3] - innerCell[0], innerVector.Negated());
+            double leftThickness = 0.2;
+            double topThickness = 0.6;
+            double rightThickness = 0.4;
+            double bottomThickness = 0.4;
+            Vector3[] glassCell = new Vector3[4];
+            glassCell[0] = innerCell[0] + panelTransform.OfVector(new Vector3(leftThickness, (-1) * bottomThickness, 0));
+            glassCell[1] = innerCell[1] + panelTransform.OfVector(new Vector3(leftThickness, topThickness, 0));
+            glassCell[2] = innerCell[2] + panelTransform.OfVector(new Vector3((-1) * rightThickness, topThickness, 0));
+            glassCell[3] = innerCell[3] + panelTransform.OfVector(new Vector3((-1) * rightThickness, (-1) * bottomThickness, 0));
+
+            Polygon glassPolygon = new Polygon(glassCell);
+
+            Material facadePanelMaterial = new Material("facadeMaterial", Colors.White);
+
+            Panel glassPanel = new Panel(glassCell, BuiltInMaterials.Glass);
+            model.AddElement(glassPanel);
+
+            for (int i = 0; i < 4; i++)
+            {
+                int j= i+1;
+                if (i==3) {j=0;}
+                Panel panel = new Panel(new Vector3[] {
+                innerCell[i],
+                cell[i],
+                cell[j],
+                innerCell[j]
+            }, facadePanelMaterial);
+                model.AddElement(panel);
+
+                Panel sidePanel = new Panel(new Vector3[] {
+                glassCell[i],
+                cell[i],
+                cell[j],
+                glassCell[j]
+            }, facadePanelMaterial);
+                model.AddElement(sidePanel);
+
+                Panel innerPannel = new Panel(new Vector3[] {
+                glassCell[i],
+                innerCell[i],
+                innerCell[j],
+                glassCell[j]
+            }, facadePanelMaterial);
+                model.AddElement(innerPannel);
+            }
+
         }
     }
 }
