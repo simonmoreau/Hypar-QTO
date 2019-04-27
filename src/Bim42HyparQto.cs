@@ -20,6 +20,7 @@ namespace Bim42HyparQto
 
             for (int i = 0; i < 5; i++)
             {
+                //Create a level
                 area = area + CreateLevel(model,i*dim.LevelDimensions.Height);
             }
 
@@ -88,8 +89,13 @@ namespace Bim42HyparQto
             Vector3[] spaceCell = spaceGrid.Cells()[0, 0];
             //Helper vector
             Vector3 towardInside = (spaceCell[1] - spaceCell[0]).Normalized();
-
             Vector3 facadeOffset = towardInside * (dim.FacadeDimensions.FacadeThickness);
+
+            //Create floor
+            Vector3[] mainCell =  new Vector3[] { spaceCell[0] + facadeOffset, spaceCell[1], spaceCell[2], spaceCell[3] + facadeOffset };
+            CreateFloors(model, mainCell);
+
+            
             Vector3 corridorOffset = towardInside * (-1.5);
             Vector3[] officeCell = new Vector3[] { spaceCell[0] + facadeOffset, spaceCell[1] + corridorOffset, spaceCell[2] + corridorOffset, spaceCell[3] + facadeOffset };
             Vector3[] corridorCell = new Vector3[] { spaceCell[1] + corridorOffset, spaceCell[1], spaceCell[2], spaceCell[2] + corridorOffset };
@@ -147,14 +153,8 @@ namespace Bim42HyparQto
             };
             CreateFacadeModule(model, facadeCell, towardInside);
 
-            Vector3 facadeOffset = towardInside * (dim.FacadeDimensions.FacadeThickness / 2);
-            Line facadeBaseLine = new Line(cell[0] + facadeOffset, cell[3] + facadeOffset);
-            Wall facadeWall = new Wall(facadeBaseLine, dim.Types.FacadeType, dim.LevelDimensions.Height, null, null);
-            //model.AddElement(facadeWall);
-
             Vector3 innerOffset = towardInside * (dim.FacadeDimensions.FacadeThickness);
             Vector3[] innerCell = new Vector3[] { cell[0] + innerOffset, cell[1], cell[2], cell[3] + innerOffset };
-            CreateFloors(model, innerCell);
 
             if (structural)
             {
