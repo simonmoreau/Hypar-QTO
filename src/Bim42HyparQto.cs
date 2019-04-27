@@ -178,6 +178,9 @@ namespace Bim42HyparQto
 
             //Create a slab
             Polygon polygon = new Polygon(cell);
+            Plane polygonPlane = polygon.Plane();
+            Vector3 normal = polygonPlane.Normal;
+            if (normal.Z < 0) {polygon = polygon.Reversed();}
             Floor bottomFloor = new Floor(polygon, dim.Types.SlabType, dim.LevelDimensions.Height, BuiltInMaterials.Steel, null, null);
             model.AddElement(bottomFloor);
 
@@ -225,7 +228,7 @@ namespace Bim42HyparQto
 
             Polygon glassPolygon = new Polygon(glassCell);
 
-            Material facadePanelMaterial = new Material("facadeMaterial", Colors.White);
+            Material facadePanelMaterial = new Material("facadeMaterial", Colors.White,(float)0.1,(float)0.1,true);
 
             Panel glassPanel = new Panel(glassCell, BuiltInMaterials.Glass);
             model.AddElement(glassPanel);
