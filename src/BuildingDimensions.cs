@@ -62,6 +62,7 @@ namespace Bim42HyparQto
         private FloorType ceillingType;
         private StructuralFramingType columnType;
         private StructuralFramingType beamType;
+        private StructuralFramingType mullionType;
         private WallType meetingRoomWallType;
         private WallType facadeType;
 
@@ -79,6 +80,10 @@ namespace Bim42HyparQto
             //Create beams types
             Profile beamProfile = new Profile(Polygon.Rectangle(dim.LevelDimensions.StructuralDimensions.ColumnDiameter, dim.LevelDimensions.StructuralDimensions.BeamHeight - dim.LevelDimensions.StructuralDimensions.SlabHeight));
             beamType = new StructuralFramingType("Beam", beamProfile, BuiltInMaterials.Steel);
+
+            //Create mullion types
+            Profile mullionProfile = new Profile(Polygon.Rectangle(0.03,0.05));
+            mullionType = new StructuralFramingType("Mullion" ,mullionProfile,BuiltInMaterials.Steel);
 
             //Create walls types
             List<MaterialLayer> meetingRoomMaterialLayers = new List<MaterialLayer>(){
@@ -98,6 +103,7 @@ namespace Bim42HyparQto
         public FloorType CeillingType { get { return ceillingType; } }
         public StructuralFramingType ColumnType { get { return columnType; } }
         public StructuralFramingType BeamType { get { return beamType; } }
+        public StructuralFramingType MullionType { get { return mullionType; } }
         public WallType MeetingRoomWallType { get { return meetingRoomWallType; } }
         public WallType FacadeType { get { return facadeType; } }
 

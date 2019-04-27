@@ -18,12 +18,23 @@ namespace Bim42HyparQto
             Model model = new Model();
             double area = 0;
 
+            for (int i = 0; i < 5; i++)
+            {
+                area = area + CreateLevel(model,i*dim.LevelDimensions.Height);
+            }
 
-            Line northFacadeLine = new Line(new Vector3(0, dim.Width, 0), new Vector3(dim.Lenght, dim.Width, 0));
-            Line northInnerLine = new Line(new Vector3(0, dim.OfficeSpaceWidth + dim.CoreWidth, 0), new Vector3(dim.Lenght, dim.OfficeSpaceWidth + dim.CoreWidth, 0));
+            return new Output(model, area);
+        }
 
-            Line southFacadeLine = new Line(new Vector3(0, 0, 0), new Vector3(dim.Lenght, 0, 0));
-            Line southInnerLine = new Line(new Vector3(0, dim.OfficeSpaceWidth, 0), new Vector3(dim.Lenght, dim.OfficeSpaceWidth, 0));
+        public double CreateLevel(Model model, double levelElevation)
+        {
+            double area = 0;
+
+            Line northFacadeLine = new Line(new Vector3(0, dim.Width, levelElevation), new Vector3(dim.Lenght, dim.Width, levelElevation));
+            Line northInnerLine = new Line(new Vector3(0, dim.OfficeSpaceWidth + dim.CoreWidth, levelElevation), new Vector3(dim.Lenght, dim.OfficeSpaceWidth + dim.CoreWidth, levelElevation));
+
+            Line southFacadeLine = new Line(new Vector3(0, 0, levelElevation), new Vector3(dim.Lenght, 0, levelElevation));
+            Line southInnerLine = new Line(new Vector3(0, dim.OfficeSpaceWidth, levelElevation), new Vector3(dim.Lenght, dim.OfficeSpaceWidth, levelElevation));
 
             CreateFaçade(model, northFacadeLine, northInnerLine);
             CreateFaçade(model, southFacadeLine, southInnerLine);
@@ -33,8 +44,7 @@ namespace Bim42HyparQto
 
             CreateCore(model, northInnerLine, southInnerLine);
 
-
-            return new Output(model, area);
+            return area;
         }
 
         public void CreateCore(Model model, Line northInnerLine, Line southInnerLine)
@@ -192,11 +202,21 @@ namespace Bim42HyparQto
 
             Vector3[] innerCell = cell.Select(v => v + innerVector).ToArray();
 
+            double[,] panelsDimensions = new double[4, 2] {
+{0.15,0.35},
+{0.15,0.25},
+{0.05,0.05},
+{0.15,0.65}
+};
+
+            Random rnd = new Random();
+            int panelNumber = rnd.Next(0, 3);
+
             Transform panelTransform = new Transform(innerCell[0], innerCell[3] - innerCell[0], innerVector.Negated());
-            double leftThickness = 0.2;
-            double topThickness = 0.6;
-            double rightThickness = 0.4;
-            double bottomThickness = 0.4;
+            double leftThickness = panelsDimensions[panelNumber, 0];
+            double topThickness = dim.LevelDimensions.CeilingThickness + dim.LevelDimensions.CeilingVoidHeight + dim.LevelDimensions.StructuralDimensions.BeamHeight;
+            double rightThickness = panelsDimensions[panelNumber, 1];
+            double bottomThickness = dim.LevelDimensions.RaisedFloorVoidHeight + dim.LevelDimensions.RaisedFloorThickness;
             Vector3[] glassCell = new Vector3[4];
             glassCell[0] = innerCell[0] + panelTransform.OfVector(new Vector3(leftThickness, (-1) * bottomThickness, 0));
             glassCell[1] = innerCell[1] + panelTransform.OfVector(new Vector3(leftThickness, topThickness, 0));
@@ -210,10 +230,16 @@ namespace Bim42HyparQto
             Panel glassPanel = new Panel(glassCell, BuiltInMaterials.Glass);
             model.AddElement(glassPanel);
 
+            Vector3 mullionStart = glassCell[0] + new Vector3(0, 0, 1);
+            Vector3 mullionEnd = glassCell[3] + new Vector3(0, 0, 1);
+            Beam mullion = new Beam(new Line(mullionStart, mullionEnd), dim.Types.MullionType);
+            model.AddElement(mullion);
+
+
             for (int i = 0; i < 4; i++)
             {
-                int j= i+1;
-                if (i==3) {j=0;}
+                int j = i + 1;
+                if (i == 3) { j = 0; }
                 Panel panel = new Panel(new Vector3[] {
                 innerCell[i],
                 cell[i],
