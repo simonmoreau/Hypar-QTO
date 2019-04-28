@@ -97,7 +97,7 @@ namespace Bim42HyparQto
             beamType = new StructuralFramingType("Beam", beamProfile, BuiltInMaterials.Concrete);
 
             //Create mullion types
-            Profile mullionProfile = new Profile(Polygon.Rectangle(0.03, 0.05));
+            Profile mullionProfile = new Profile(Polygon.Rectangle(0.03, 0.1));
             mullionType = new StructuralFramingType("Mullion", mullionProfile, BuiltInMaterials.Steel);
 
             //Create walls types
@@ -129,6 +129,7 @@ namespace Bim42HyparQto
         private double _beam_height; //full height, including slab thickness
         private double _slab_height;
         private double _column_diameter;
+        private double _column_offset;
 
         private static readonly StructuralDimensions instance = new StructuralDimensions();
 
@@ -140,6 +141,7 @@ namespace Bim42HyparQto
             _beam_height = 0.6;
             _slab_height = 0.2;
             _column_diameter = 0.5;
+            _column_offset = 0.5;
         }
         public static StructuralDimensions Instance
         {
@@ -149,6 +151,7 @@ namespace Bim42HyparQto
         public double BeamHeight { get { return _beam_height; } set { _beam_height = value; } }
         public double SlabHeight { get { return _slab_height; } set { _slab_height = value; } }
         public double ColumnDiameter { get { return _column_diameter; } set { _column_diameter = value; } }
+        public double ColumnOffset { get { return _column_offset; } set { _column_offset = value; } }
     }
 
     public sealed class FacadeDimensions

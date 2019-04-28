@@ -18,13 +18,65 @@ namespace Bim42HyparQto
             Model model = new Model();
             double area = 0;
 
-            for (int i = 0; i < 5; i++)
+            double levelElevation = 0;
+
+            for (int i = 0; i < 4; i++)
             {
-                //Create a level
-                area = area + CreateLevel(model,i*dim.LevelDimensions.Height);
+                if (i == 0)
+                {
+                    levelElevation = 5;
+                    area = area + CreateGroundLevel(model);
+                }
+                else
+                {
+                    //Create a level
+                    area = area + CreateLevel(model, levelElevation);
+                    levelElevation = levelElevation + dim.LevelDimensions.Height;
+                }
+
             }
 
             return new Output(model, area);
+        }
+
+        public double CreateGroundLevel(Model model)
+        {
+            double area = 0;
+
+            //Create slab
+
+            //Create Façade
+            Line northFacadeLine = new Line(new Vector3(0, dim.Width, 0), new Vector3(dim.Lenght, dim.Width, 0));
+            Line northInnerLine = new Line(new Vector3(0, dim.Width / 2, 0), new Vector3(dim.Lenght, dim.Width / 2, 0));
+
+            Line southFacadeLine = new Line(new Vector3(0, 0, 0), new Vector3(dim.Lenght, 0, 0));
+            Line southInnerLine = new Line(new Vector3(0, dim.Width / 2, 0), new Vector3(dim.Lenght, dim.Width / 2, 0));
+
+            CreateGroundFaçade(model, northFacadeLine, northInnerLine);
+            CreateGroundFaçade(model, southFacadeLine, southInnerLine);
+
+            return area;
+        }
+
+        public void CreateGroundFaçade(Model model, Line façadeLine, Line innerLine)
+        {
+            Grid moduleGrid = new Grid(façadeLine, innerLine, dim.ModuleNumber, 1);
+
+            for (int i = 0; i < moduleGrid.Cells().GetLength(0); i++)
+            {
+                Vector3[] cell = moduleGrid.Cells()[i, 0];
+
+                //Create a beam each 3 module
+                Math.DivRem(i, 3, out int remainer);
+                if (remainer == 0)
+                {
+                    CreateModule(model, cell, true, 5);
+                }
+                else
+                {
+                    CreateModule(model, cell, false, 5);
+                }
+            }
         }
 
         public double CreateLevel(Model model, double levelElevation)
@@ -62,7 +114,7 @@ namespace Bim42HyparQto
 
             CreateMeetingRoom(model, meetingCell);
 
-            CreateFloors(model, coreGrid.Cells()[0, 0]);
+            CreateFloors(model, coreGrid.Cells()[0, 0], dim.LevelDimensions.Height);
         }
 
         public void CreateMeetingRoom(Model model, Vector3[] cell)
@@ -92,10 +144,10 @@ namespace Bim42HyparQto
             Vector3 facadeOffset = towardInside * (dim.FacadeDimensions.FacadeThickness);
 
             //Create floor
-            Vector3[] mainCell =  new Vector3[] { spaceCell[0] + facadeOffset, spaceCell[1], spaceCell[2], spaceCell[3] + facadeOffset };
-            CreateFloors(model, mainCell);
+            Vector3[] mainCell = new Vector3[] { spaceCell[0] + facadeOffset, spaceCell[1], spaceCell[2], spaceCell[3] + facadeOffset };
+            CreateFloors(model, mainCell, dim.LevelDimensions.Height);
 
-            
+
             Vector3 corridorOffset = towardInside * (-1.5);
             Vector3[] officeCell = new Vector3[] { spaceCell[0] + facadeOffset, spaceCell[1] + corridorOffset, spaceCell[2] + corridorOffset, spaceCell[3] + facadeOffset };
             Vector3[] corridorCell = new Vector3[] { spaceCell[1] + corridorOffset, spaceCell[1], spaceCell[2], spaceCell[2] + corridorOffset };
@@ -116,7 +168,6 @@ namespace Bim42HyparQto
 
             return area;
         }
-
         public void CreateFaçade(Model model, Line façadeLine, Line innerLine)
         {
             Grid moduleGrid = new Grid(façadeLine, innerLine, dim.ModuleNumber, 1);
@@ -129,16 +180,16 @@ namespace Bim42HyparQto
                 Math.DivRem(i, 3, out int remainer);
                 if (remainer == 0)
                 {
-                    CreateModule(model, cell, true);
+                    CreateModule(model, cell, true, dim.LevelDimensions.Height);
                 }
                 else
                 {
-                    CreateModule(model, cell, false);
+                    CreateModule(model, cell, false, dim.LevelDimensions.Height);
                 }
             }
         }
 
-        public void CreateModule(Model model, Vector3[] cell, bool structural)
+        public void CreateModule(Model model, Vector3[] cell, bool structural, double levelHeight)
         {
 
             //Helper vector
@@ -147,11 +198,19 @@ namespace Bim42HyparQto
             //Create a façade
             Vector3[] facadeCell = new Vector3[] {
                 cell[0],
-                cell[0] + new Vector3(0,0,dim.LevelDimensions.Height),
-                cell[3] + new Vector3(0,0,dim.LevelDimensions.Height),
+                cell[0] + new Vector3(0,0,levelHeight),
+                cell[3] + new Vector3(0,0,levelHeight),
                 cell[3]
             };
-            CreateFacadeModule(model, facadeCell, towardInside);
+            if (levelHeight == 5)
+            {
+                CreateGroundFacadeModule(model, facadeCell, towardInside);
+            }
+            else
+            {
+                CreateFacadeModule(model, facadeCell, towardInside);
+            }
+
 
             Vector3 innerOffset = towardInside * (dim.FacadeDimensions.FacadeThickness);
             Vector3[] innerCell = new Vector3[] { cell[0] + innerOffset, cell[1], cell[2], cell[3] + innerOffset };
@@ -159,12 +218,12 @@ namespace Bim42HyparQto
             if (structural)
             {
 
-                double column_height = dim.LevelDimensions.Height - dim.LevelDimensions.StructuralDimensions.BeamHeight;
-                Vector3 columnOffset = towardInside * 0.5;
+                double column_height = levelHeight - dim.LevelDimensions.StructuralDimensions.BeamHeight;
+                Vector3 columnOffset = towardInside * dim.LevelDimensions.StructuralDimensions.ColumnOffset;
                 Column circularColumn = new Column(innerCell[0] + columnOffset, column_height, dim.Types.ColumnType, null, 0, 0);
                 model.AddElement(circularColumn);
 
-                Vector3 beamElevation = new Vector3(0, 0, dim.LevelDimensions.Height - dim.LevelDimensions.StructuralDimensions.SlabHeight - (dim.LevelDimensions.StructuralDimensions.BeamHeight - dim.LevelDimensions.StructuralDimensions.SlabHeight) / 2);
+                Vector3 beamElevation = new Vector3(0, 0, levelHeight - dim.LevelDimensions.StructuralDimensions.SlabHeight - (dim.LevelDimensions.StructuralDimensions.BeamHeight - dim.LevelDimensions.StructuralDimensions.SlabHeight) / 2);
                 Line beamLine = new Line(innerCell[0] + beamElevation, innerCell[1] + beamElevation);
 
 
@@ -173,15 +232,15 @@ namespace Bim42HyparQto
             }
         }
 
-        public void CreateFloors(Model model, Vector3[] cell)
+        public void CreateFloors(Model model, Vector3[] cell, double levelHeight)
         {
 
             //Create a slab
             Polygon polygon = new Polygon(cell);
             Plane polygonPlane = polygon.Plane();
             Vector3 normal = polygonPlane.Normal;
-            if (normal.Z < 0) {polygon = polygon.Reversed();}
-            Floor bottomFloor = new Floor(polygon, dim.Types.SlabType, dim.LevelDimensions.Height);
+            if (normal.Z < 0) { polygon = polygon.Reversed(); }
+            Floor bottomFloor = new Floor(polygon, dim.Types.SlabType, levelHeight);
             model.AddElement(bottomFloor);
 
             //Create a raised floor
@@ -228,7 +287,7 @@ namespace Bim42HyparQto
 
             Polygon glassPolygon = new Polygon(glassCell);
 
-            Material facadePanelMaterial = new Material("facadeMaterial", Colors.White,(float)0.1,(float)0.1,true);
+            Material facadePanelMaterial = new Material("facadeMaterial", Colors.White, (float)0.1, (float)0.1, true);
 
             Panel glassPanel = new Panel(glassCell, BuiltInMaterials.Glass);
             model.AddElement(glassPanel);
@@ -268,6 +327,58 @@ namespace Bim42HyparQto
                 model.AddElement(innerPannel);
             }
 
+        }
+
+        public void CreateGroundFacadeModule(Model model, Vector3[] cell, Vector3 towardInside)
+        {
+            Vector3 innerVector = towardInside * (dim.FacadeDimensions.FacadeThickness - 0.03 / 2);
+            Polygon cellPolygon = new Polygon(cell);
+            if (cellPolygon.Plane().Normal.Normalized().Equals(innerVector.Normalized()))
+            {
+                cell = cellPolygon.Reversed().Vertices;
+            }
+
+            Vector3[] mullionCell = cell.Select(v => v + innerVector).ToArray();
+
+            Transform panelTransform = new Transform(mullionCell[0], mullionCell[3] - mullionCell[0], innerVector);
+
+            double[] mullionsElevation = new double[4] {
+                0.1/2,
+                3,
+                5-dim.LevelDimensions.StructuralDimensions.SlabHeight-dim.LevelDimensions.StructuralDimensions.BeamHeight-dim.LevelDimensions.CeilingVoidHeight-dim.LevelDimensions.CeilingThickness,
+                5-0.1/2};
+
+            for (int i = 0; i < mullionsElevation.Length; i++)
+            {
+                Vector3 left = mullionCell[0] + panelTransform.OfVector(new Vector3(0.05, mullionsElevation[i], 0));
+
+                Vector3 right = mullionCell[3] + panelTransform.OfVector(new Vector3(-0.05, mullionsElevation[i], 0));
+
+                Beam mullion = new Beam(new Line(left, right), dim.Types.MullionType);
+                model.AddElement(mullion);
+
+                if (i < mullionsElevation.Length - 1)
+                {
+                    Material facadePanelMaterial = BuiltInMaterials.Glass;
+                    if (i == 2) { facadePanelMaterial = new Material("facadeMaterial", Colors.White, (float)0.1, (float)0.1, true); }
+
+                    Vector3 leftDown = mullionCell[0] + panelTransform.OfVector(new Vector3(0.05, mullionsElevation[i] + 0.05, 0));
+                    Vector3 rightDown = mullionCell[3] + panelTransform.OfVector(new Vector3(-0.05, mullionsElevation[i] + 0.05, 0));
+                    Vector3 leftUp = mullionCell[0] + panelTransform.OfVector(new Vector3(0.05, mullionsElevation[i + 1] - 0.05, 0));
+                    Vector3 rightUp = mullionCell[3] + panelTransform.OfVector(new Vector3(-0.05, mullionsElevation[i + 1] - 0.05, 0));
+                    Panel innerPannel = new Panel(new Vector3[] {
+                leftDown,
+                leftUp,
+                rightUp,
+                rightDown
+            }, facadePanelMaterial);
+                    model.AddElement(innerPannel);
+                }
+
+                Beam LeftMullion = new Beam(new Line(mullionCell[0], mullionCell[1]), dim.Types.MullionType);
+                model.AddElement(LeftMullion);
+
+            }
         }
     }
 }
