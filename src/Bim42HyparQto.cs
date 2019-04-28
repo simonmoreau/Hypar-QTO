@@ -77,6 +77,16 @@ namespace Bim42HyparQto
                     CreateModule(model, cell, false, 5);
                 }
             }
+
+                        Grid spaceGrid = new Grid(façadeLine, innerLine, 1, 1);
+            Vector3[] spaceCell = spaceGrid.Cells()[0, 0];
+            //Helper vector
+            Vector3 towardInside = (spaceCell[1] - spaceCell[0]).Normalized();
+            Vector3 facadeOffset = towardInside * (dim.FacadeDimensions.FacadeThickness);
+
+            //Create floor
+            Vector3[] mainCell = new Vector3[] { spaceCell[0] + facadeOffset, spaceCell[1], spaceCell[2], spaceCell[3] + facadeOffset };
+            CreateFloors(model, mainCell, 5);
         }
 
         public double CreateLevel(Model model, double levelElevation)
@@ -248,7 +258,7 @@ namespace Bim42HyparQto
             model.AddElement(raisedFloor);
 
             //Create a ceilling
-            double ceilingElevation = dim.LevelDimensions.RaisedFloorVoidHeight + dim.LevelDimensions.RaisedFloorThickness + dim.LevelDimensions.Headspace + dim.LevelDimensions.CeilingThickness;
+            double ceilingElevation = levelHeight - dim.LevelDimensions.StructuralDimensions.BeamHeight - dim.LevelDimensions.CeilingVoidHeight;
             Floor ceilling = new Floor(polygon, dim.Types.CeillingType, ceilingElevation);
             model.AddElement(ceilling);
         }
