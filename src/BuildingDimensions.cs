@@ -68,22 +68,37 @@ namespace Bim42HyparQto
 
         public Types(BuildingDimensions dim)
         {
+            //Create material
+            Material concrete = new Material("Concrete", Elements.Geometry.Colors.Gray);
+
             //Create floor types
-            slabType = new FloorType("slab", dim.LevelDimensions.StructuralDimensions.SlabHeight);
-            raisedFloorType = new FloorType("Raised floor", dim.LevelDimensions.RaisedFloorThickness);
-            ceillingType = new FloorType("Ceilling", dim.LevelDimensions.CeilingThickness);
+            List<MaterialLayer> slabMaterial = new List<MaterialLayer>() {
+                new MaterialLayer(BuiltInMaterials.Concrete,dim.LevelDimensions.StructuralDimensions.SlabHeight)
+            };
+            slabType = new FloorType("slab", slabMaterial);
+
+            List<MaterialLayer> raisedFloorMaterial = new List<MaterialLayer>() {
+                new MaterialLayer(BuiltInMaterials.Wood,dim.LevelDimensions.RaisedFloorThickness)
+            };
+            raisedFloorType = new FloorType("Raised floor", raisedFloorMaterial);
+
+            List<MaterialLayer> ceillingMaterial = new List<MaterialLayer>() {
+                new MaterialLayer(BuiltInMaterials.Default,dim.LevelDimensions.CeilingThickness)
+            };
+
+            ceillingType = new FloorType("Ceilling", ceillingMaterial);
 
             //Create columns types
             Profile circularColumnProfile = new Profile(Polygon.Circle(dim.LevelDimensions.StructuralDimensions.ColumnDiameter / 2));
-            columnType = new StructuralFramingType("Circular Column", circularColumnProfile, BuiltInMaterials.Steel);
+            columnType = new StructuralFramingType("Circular Column", circularColumnProfile, BuiltInMaterials.Concrete);
 
             //Create beams types
             Profile beamProfile = new Profile(Polygon.Rectangle(dim.LevelDimensions.StructuralDimensions.ColumnDiameter, dim.LevelDimensions.StructuralDimensions.BeamHeight - dim.LevelDimensions.StructuralDimensions.SlabHeight));
-            beamType = new StructuralFramingType("Beam", beamProfile, BuiltInMaterials.Steel);
+            beamType = new StructuralFramingType("Beam", beamProfile, BuiltInMaterials.Concrete);
 
             //Create mullion types
-            Profile mullionProfile = new Profile(Polygon.Rectangle(0.03,0.05));
-            mullionType = new StructuralFramingType("Mullion" ,mullionProfile,BuiltInMaterials.Steel);
+            Profile mullionProfile = new Profile(Polygon.Rectangle(0.03, 0.05));
+            mullionType = new StructuralFramingType("Mullion", mullionProfile, BuiltInMaterials.Steel);
 
             //Create walls types
             List<MaterialLayer> meetingRoomMaterialLayers = new List<MaterialLayer>(){

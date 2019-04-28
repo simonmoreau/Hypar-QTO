@@ -181,16 +181,16 @@ namespace Bim42HyparQto
             Plane polygonPlane = polygon.Plane();
             Vector3 normal = polygonPlane.Normal;
             if (normal.Z < 0) {polygon = polygon.Reversed();}
-            Floor bottomFloor = new Floor(polygon, dim.Types.SlabType, dim.LevelDimensions.Height, BuiltInMaterials.Steel, null, null);
+            Floor bottomFloor = new Floor(polygon, dim.Types.SlabType, dim.LevelDimensions.Height);
             model.AddElement(bottomFloor);
 
             //Create a raised floor
-            Floor raisedFloor = new Floor(polygon, dim.Types.RaisedFloorType, dim.LevelDimensions.RaisedFloorThickness + dim.LevelDimensions.RaisedFloorVoidHeight, BuiltInMaterials.Wood, null, null);
+            Floor raisedFloor = new Floor(polygon, dim.Types.RaisedFloorType, dim.LevelDimensions.RaisedFloorThickness + dim.LevelDimensions.RaisedFloorVoidHeight);
             model.AddElement(raisedFloor);
 
             //Create a ceilling
             double ceilingElevation = dim.LevelDimensions.RaisedFloorVoidHeight + dim.LevelDimensions.RaisedFloorThickness + dim.LevelDimensions.Headspace + dim.LevelDimensions.CeilingThickness;
-            Floor ceilling = new Floor(polygon, dim.Types.CeillingType, ceilingElevation, BuiltInMaterials.Wood, null, null);
+            Floor ceilling = new Floor(polygon, dim.Types.CeillingType, ceilingElevation);
             model.AddElement(ceilling);
         }
 
