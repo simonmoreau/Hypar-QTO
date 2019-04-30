@@ -12,6 +12,7 @@ namespace Bim42HyparQto
   	public class Bim42HyparQto
     {
         private BuildingDimensions dim = BuildingDimensions.Instance;
+        private Vector3 beamOrigin;
         public Output Execute(Input input)
         {
             // Create a model
@@ -61,11 +62,11 @@ namespace Bim42HyparQto
         public void CreateGroundFaçade(Model model, Line façadeLine, Line innerLine)
         {
             Grid moduleGrid = new Grid(façadeLine, innerLine, dim.ModuleNumber, 1);
+            beamOrigin = null;
 
             for (int i = 0; i < moduleGrid.Cells().GetLength(0); i++)
             {
                 Vector3[] cell = moduleGrid.Cells()[i, 0];
-
                 //Create a beam each 3 module
                 Math.DivRem(i, 3, out int remainer);
                 if (remainer == 0)
@@ -78,7 +79,7 @@ namespace Bim42HyparQto
                 }
             }
 
-                        Grid spaceGrid = new Grid(façadeLine, innerLine, 1, 1);
+            Grid spaceGrid = new Grid(façadeLine, innerLine, 1, 1);
             Vector3[] spaceCell = spaceGrid.Cells()[0, 0];
             //Helper vector
             Vector3 towardInside = (spaceCell[1] - spaceCell[0]).Normalized();
@@ -181,6 +182,7 @@ namespace Bim42HyparQto
         public void CreateFaçade(Model model, Line façadeLine, Line innerLine)
         {
             Grid moduleGrid = new Grid(façadeLine, innerLine, dim.ModuleNumber, 1);
+            beamOrigin =null;
 
             for (int i = 0; i < moduleGrid.Cells().GetLength(0); i++)
             {
@@ -233,12 +235,21 @@ namespace Bim42HyparQto
                 Column circularColumn = new Column(innerCell[0] + columnOffset, column_height, dim.Types.ColumnType, null, 0, 0);
                 model.AddElement(circularColumn);
 
+
+
                 Vector3 beamElevation = new Vector3(0, 0, levelHeight - dim.LevelDimensions.StructuralDimensions.SlabHeight - (dim.LevelDimensions.StructuralDimensions.BeamHeight - dim.LevelDimensions.StructuralDimensions.SlabHeight) / 2);
-                Line beamLine = new Line(innerCell[0] + beamElevation, innerCell[1] + beamElevation);
+                if (beamOrigin == null)
+                {
+                    beamOrigin = innerCell[0] + columnOffset + beamElevation;
+                }
+                else
+                {
+                    Line beamLine = new Line(beamOrigin, innerCell[0] + columnOffset + beamElevation);
+                    Beam beam = new Beam(beamLine, dim.Types.BeamType);
+                    model.AddElement(beam);
+                }
 
 
-                Beam beam = new Beam(beamLine, dim.Types.BeamType);
-                model.AddElement(beam);
             }
         }
 
