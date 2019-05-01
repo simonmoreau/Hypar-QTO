@@ -189,7 +189,7 @@ namespace Bim42HyparQto
         private double _ceiling_thickness;
         private double _raised_floor_void_height;
         private double _raised_floor_thickness;
-        private double _headspace;
+        private double _headroom;
         private StructuralDimensions _structuralDimensions;
         private static readonly LevelDimensions instance = new LevelDimensions();
 
@@ -206,12 +206,12 @@ namespace Bim42HyparQto
             _ceiling_thickness = 0.05;
             _raised_floor_void_height = 0.07;
             _raised_floor_thickness = 0.03;
-            _headspace = 2.7;
+            _headroom = 2.7;
 
             _height =
 _raised_floor_void_height +
 _raised_floor_thickness +
-_headspace +
+_headroom +
 _ceiling_thickness +
 _ceiling_void_height +
 _structuralDimensions.BeamHeight;
@@ -230,7 +230,16 @@ _structuralDimensions.BeamHeight;
         public double CeilingThickness { get { return _ceiling_thickness; } set { _ceiling_thickness = value; } }
         public double RaisedFloorVoidHeight { get { return _raised_floor_void_height; } set { _raised_floor_void_height = value; } }
         public double RaisedFloorThickness { get { return _raised_floor_thickness; } set { _raised_floor_thickness = value; } }
-        public double Headspace { get { return _headspace; } set { _headspace = value; } }
+        public double Headroom { get { return _headroom; } set { 
+            _headroom = value; 
+                        _height =
+_raised_floor_void_height +
+_raised_floor_thickness +
+_headroom +
+_ceiling_thickness +
+_ceiling_void_height +
+_structuralDimensions.BeamHeight;
+            } }
         public StructuralDimensions StructuralDimensions { get { return _structuralDimensions; } }
     }
 }

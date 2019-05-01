@@ -1,21 +1,32 @@
 {
   "$schema": "https://hypar.io/schemas/function.json",
   "description": "A generator for building a simplified model for Quantity TakeOff.",
-  "function_id": "bim42-hypar-qto",
+  "id": "bim42-hypar-qto",
   "name": "Hypar QTO",
 	"inputs": [
 		{
-			"name": "height",
-			"min": 1.0,
-			"max": 10.0,
-			"step": 1.0,
-			"description": "The height of the object.",
+			"name": "Headroom",
+			"min": 2.0,
+			"max": 5.0,
+			"step": 0.1,
+			"description": "The headroom in a level.",
 			"type": "range"
 		},
 		{
-			"name": "location",
-			"description": "The location of the object on the planet Earth.",
-			"type": "location"
+			"name": "Width",
+			"min": 10.0,
+			"max": 30.0,
+			"step": 1.0,
+			"description": "The width of the building",
+			"type": "range"
+		},
+		{
+			"name": "Module Width",
+			"min": 1.0,
+			"max": 2.0,
+			"step": 0.05,
+			"description": "The width of a façade element",
+			"type": "range"
 		}
 	],
 	"outputs": [

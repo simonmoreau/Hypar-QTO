@@ -16,6 +16,13 @@ namespace Bim42HyparQto
         {
             // Create a model
             Model model = new Model();
+
+            //Get the input values
+            dim.LevelDimensions.Headroom = input.Headroom;
+            dim.Width = input.Width;
+            dim.FacadeDimensions.ModuleLenght = input.ModuleWidth;
+            
+            
             double area = 0;
 
             double levelElevation = 0;
@@ -139,7 +146,7 @@ namespace Bim42HyparQto
 
                 Line wallLine = new Line(startPoint, endPoint);
 
-                Wall meetingWall = new Wall(wallLine, dim.Types.MeetingRoomWallType, dim.LevelDimensions.Headspace);
+                Wall meetingWall = new Wall(wallLine, dim.Types.MeetingRoomWallType, dim.LevelDimensions.Headroom);
                 model.AddElement(meetingWall);
 
             }
@@ -168,11 +175,11 @@ namespace Bim42HyparQto
 
             Material MintMaterial = new Material("Mint", GeometryEx.Palette.Mint);
             Material GreenMaterila = new Material("Green", GeometryEx.Palette.Green);
-            Space officeSpace = new Space(new Profile(officePolygon), dim.LevelDimensions.Headspace, dim.LevelDimensions.RaisedFloorThickness + dim.LevelDimensions.RaisedFloorVoidHeight, MintMaterial, null);
+            Space officeSpace = new Space(new Profile(officePolygon), dim.LevelDimensions.Headroom, dim.LevelDimensions.RaisedFloorThickness + dim.LevelDimensions.RaisedFloorVoidHeight, MintMaterial, null);
             //model.AddElement(officeSpace);
             area = area + officePolygon.Area();
 
-            Space corridorSpace = new Space(new Profile(corridorPolygon), dim.LevelDimensions.Headspace, dim.LevelDimensions.RaisedFloorThickness + dim.LevelDimensions.RaisedFloorVoidHeight, MintMaterial, null);
+            Space corridorSpace = new Space(new Profile(corridorPolygon), dim.LevelDimensions.Headroom, dim.LevelDimensions.RaisedFloorThickness + dim.LevelDimensions.RaisedFloorVoidHeight, MintMaterial, null);
             model.AddElement(corridorSpace);
             area = area + corridorPolygon.Area();
 
