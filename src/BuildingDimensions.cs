@@ -15,6 +15,7 @@ namespace Bim42HyparQto
         private int _module_number;
         private double _core_width;
         private double _office_space_width;
+        private double _corridor_width;
         private FacadeDimensions _facadeDimensions;
         private LevelDimensions _levelDimensions;
         private Types _types;
@@ -32,6 +33,7 @@ namespace Bim42HyparQto
             _module_number = 20;
             _width = 18.5;
             _core_width = 5;
+            _corridor_width = 1.5;
             _lenght = _facadeDimensions.ModuleLenght * _module_number;
             _office_space_width = (_width - _core_width) / 2;
             _types = new Types(this);
@@ -52,6 +54,7 @@ namespace Bim42HyparQto
         public double Width { get { return _width; } set { _width = value; } }
         public double CoreWidth { get { return _core_width; } set { _core_width = value; } }
         public double OfficeSpaceWidth { get { return _office_space_width; } set { _office_space_width = value; } }
+        public double CorridorWidth { get { return _corridor_width; } set { _corridor_width = value; } }
         public double Lenght { get { return _lenght; } set { _lenght = value; } }
     }
 

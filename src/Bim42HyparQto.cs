@@ -21,29 +21,114 @@ namespace Bim42HyparQto
             dim.LevelDimensions.Headroom = input.Headroom;
             dim.Width = input.Width;
             dim.FacadeDimensions.ModuleLenght = input.ModuleWidth;
-            
-            
-            double area = 0;
 
-            double levelElevation = 0;
+            double area = 5;
 
-            for (int i = 0; i < 4; i++)
-            {
-                if (i == 0)
-                {
-                    levelElevation = 5;
-                    area = area + CreateGroundLevel(model);
-                }
-                else
-                {
-                    //Create a level
-                    area = area + CreateLevel(model, levelElevation);
-                    levelElevation = levelElevation + dim.LevelDimensions.Height;
-                }
+            // Create building façades
+            Line northFacadeLine = new Line(new Vector3(0, dim.Width, 0), new Vector3(dim.Lenght, dim.Width, 0));
+            Line southFacadeLine = new Line(new Vector3(0, 0, 0), new Vector3(dim.Lenght, 0, 0));
 
-            }
+            // Create grid divisions
+            double[] uDistances = Enumerable.Repeat(dim.FacadeDimensions.ModuleLenght, dim.ModuleNumber).ToArray();
+            double[] vDistances = new double[] {
+                dim.OfficeSpaceWidth - dim.CorridorWidth,
+                dim.CorridorWidth,
+                dim.CoreWidth,
+                dim.CorridorWidth,
+                dim.OfficeSpaceWidth - dim.CorridorWidth*2
+            };
+
+            // Create the main grid of the building
+            GridEx buildingGrid = new GridEx(southFacadeLine, northFacadeLine, uDistances, vDistances);
+
+            ColoredSpaces(model, buildingGrid.TopCells,Colors.Green);
+            ColoredSpaces(model, buildingGrid.BottomCells,Colors.Yellow);
+            ColoredSpaces(model, buildingGrid.LeftCells,Colors.Red);
+            ColoredSpaces(model, buildingGrid.RightCells,Colors.Blue);
+
+            CreateFaçades(model, buildingGrid);
+
+            Column column = new Column(new Vector3(0,0,0),10,dim.Types.ColumnType);
+            model.AddElement(column);
+            // CreateFloors(model, buildingGrid);
+
+            // double levelElevation = 0;
+
+            // for (int i = 0; i < 4; i++)
+            // {
+            //     if (i == 0)
+            //     {
+            //         levelElevation = 5;
+            //         area = area + CreateGroundLevel(model);
+            //     }
+            //     else
+            //     {
+            //         //Create a level
+            //         area = area + CreateLevel(model, levelElevation);
+            //         levelElevation = levelElevation + dim.LevelDimensions.Height;
+            //     }
+            // }
 
             return new Output(model, area);
+        }
+
+        public void ColoredSpaces(Model model, List<Cell> cells, Color color)
+        {
+            foreach (Cell cell in cells)
+            {
+                Polygon cellPolygon = new Polygon(cell.Points);
+                cellPolygon = cellPolygon.Offset(-0.1)[0];
+                Material mat = new Material("color" + color.GetHashCode().ToString(),color);
+
+                Space space = new Space(new Profile(cellPolygon),0.2,0,mat);
+                model.AddElement(space);
+            }
+        }
+
+        public void CreateFloors(Model model, GridEx buildingGrid)
+        {
+            Cell[,] cells = buildingGrid.Cells;
+            int maxRow = cells.GetLength(0) - 1;
+            int maxColumn = cells.GetLength(1) - 1;
+
+            Vector3[] floorCell = new Vector3[] {
+                cells[0,0].Points[0],
+                cells[maxRow,0].Points[1],
+                cells[maxRow,maxColumn].Points[2],
+                cells[0,maxColumn].Points[3],
+            };
+
+            CreateFloors(model, floorCell, dim.LevelDimensions.Height);
+        }
+
+        public void CreateFaçades(Model model, GridEx buildingGrid)
+        {
+            Cell[,] cells = buildingGrid.Cells;
+
+            int columnNumber = cells.GetLength(0); // 20
+            int rowNumber = cells.GetLength(1); // 5
+            int[] rows = new int[] { 0, rowNumber - 1 };
+
+            List<Cell> outerCells = cells.Cast<Cell>().ToList().Where(c => c.IsInnerCell == false).ToList();
+            Vector3 levelHeight = Vector3.ZAxis * dim.LevelDimensions.Height;
+
+            foreach (Cell outerCell in outerCells)
+            {
+                foreach (Line line in outerCell.GetExteriorLines())
+                {
+                    Vector3[] facadeCell = new Vector3[] {
+                    line.Start,
+                    line.Start + levelHeight,
+                    line.End + levelHeight,
+                    line.End
+                    };
+
+                    Plane facadeCellPlane = new Plane(line.Start, line.Start + levelHeight, line.End);
+                    Vector3 towardInside = facadeCellPlane.Normal.Normalized();
+
+                    CreateFacadeModule(model, facadeCell, towardInside);
+                }
+            }
         }
 
         public double CreateGroundLevel(Model model)
@@ -85,7 +170,7 @@ namespace Bim42HyparQto
                 }
             }
 
-                        Grid spaceGrid = new Grid(façadeLine, innerLine, 1, 1);
+            Grid spaceGrid = new Grid(façadeLine, innerLine, 1, 1);
             Vector3[] spaceCell = spaceGrid.Cells()[0, 0];
             //Helper vector
             Vector3 towardInside = (spaceCell[1] - spaceCell[0]).Normalized();
@@ -270,16 +355,16 @@ namespace Bim42HyparQto
             model.AddElement(ceilling);
         }
 
-        public void CreateFacadeModule(Model model, Vector3[] cell, Vector3 towardInside)
+        public void CreateFacadeModule(Model model, Vector3[] facadeCell, Vector3 towardInside)
         {
             Vector3 innerVector = towardInside * dim.FacadeDimensions.FacadeThickness;
-            Polygon cellPolygon = new Polygon(cell);
+            Polygon cellPolygon = new Polygon(facadeCell);
             if (cellPolygon.Plane().Normal.Normalized().Equals(innerVector.Normalized()))
             {
-                cell = cellPolygon.Reversed().Vertices;
+                facadeCell = cellPolygon.Reversed().Vertices;
             }
 
-            Vector3[] innerCell = cell.Select(v => v + innerVector).ToArray();
+            Vector3[] innerCell = facadeCell.Select(v => v + innerVector).ToArray();
 
             double[,] panelsDimensions = new double[4, 2] {
 {0.15,0.35},
@@ -321,16 +406,16 @@ namespace Bim42HyparQto
                 if (i == 3) { j = 0; }
                 Panel panel = new Panel(new Vector3[] {
                 innerCell[i],
-                cell[i],
-                cell[j],
+                facadeCell[i],
+                facadeCell[j],
                 innerCell[j]
             }, facadePanelMaterial);
                 model.AddElement(panel);
 
                 Panel sidePanel = new Panel(new Vector3[] {
                 glassCell[i],
-                cell[i],
-                cell[j],
+                facadeCell[i],
+                facadeCell[j],
                 glassCell[j]
             }, facadePanelMaterial);
                 model.AddElement(sidePanel);
