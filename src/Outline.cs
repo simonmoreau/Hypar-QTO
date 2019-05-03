@@ -24,7 +24,6 @@ namespace Bim42HyparQto.Outline
                 Convert.ToDouble(data[7]),
                 Convert.ToDouble(data[8])
             );
-
         }
 
         public Level Level { get; set; }

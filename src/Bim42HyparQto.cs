@@ -104,16 +104,9 @@ namespace Bim42HyparQto
 
         public void CreateFaçades(Model model, GridEx buildingGrid)
         {
-            Cell[,] cells = buildingGrid.Cells;
-
-            int columnNumber = cells.GetLength(0); // 20
-            int rowNumber = cells.GetLength(1); // 5
-            int[] rows = new int[] { 0, rowNumber - 1 };
-
-            List<Cell> outerCells = cells.Cast<Cell>().ToList().Where(c => c.IsInnerCell == false).ToList();
             Vector3 levelHeight = Vector3.ZAxis * dim.LevelDimensions.Height;
 
-            foreach (Cell outerCell in outerCells)
+            foreach (Cell outerCell in buildingGrid.OuterCells)
             {
                 foreach (Line line in outerCell.GetExteriorLines())
                 {

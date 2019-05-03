@@ -20,7 +20,8 @@ namespace Bim42HyparQto
         private List<Cell> _bottomCells = new List<Cell>();
         private List<Cell> _rightCells = new List<Cell>();
         private List<Cell> _leftCells = new List<Cell>();
-
+        private List<Cell> _innerCells = new List<Cell>();
+        private List<Cell> _outerCells = new List<Cell>();
         private Vector3[][] _pts;
 
         private double[] CalculateEqualDivisions(int n)
@@ -107,6 +108,8 @@ namespace Bim42HyparQto
                     if (i == this._pts.GetLength(0) - 2) { _rightCells.Add(cell); }
                     if (j == 0) { _bottomCells.Add(cell); }
                     if (j == this._pts[i].Length - 2) { _topCells.Add(cell); }
+                    if (i != 0 && i != this._pts.GetLength(0) - 2 && j != 0 || j != this._pts[i].Length - 2) { _innerCells.Add(cell); }
+                    if (i == 0 || i == this._pts.GetLength(0) - 2 || j == 0 || j == this._pts[i].Length - 2) { _outerCells.Add(cell); }
                 }
             }
 
@@ -152,6 +155,22 @@ namespace Bim42HyparQto
         public List<Cell> RightCells
         {
             get { return _rightCells; }
+        }
+
+        /// <summary>
+        /// Get inner cells.
+        /// </summary>
+        public List<Cell> InnerCells
+        {
+            get { return _innerCells; }
+        }
+
+        /// <summary>
+        /// Get outer cells.
+        /// </summary>
+        public List<Cell> OuterCells
+        {
+            get { return _outerCells; }
         }
 
         /// <summary>
@@ -213,7 +232,6 @@ namespace Bim42HyparQto
         private int _column;
         private int _rowNum;
         private int _columnNum;
-        private GridEx _parentGrid;
 
         /// <summary>
         /// Construct a cell.
@@ -232,21 +250,6 @@ namespace Bim42HyparQto
             _columnNum = columnNum;
         }
 
-        public bool IsInnerCell
-        {
-            get
-            {
-                if (_row == 0 || _row == _rowNum - 1 || _column == 0 || _column == _columnNum - 1)
-                {
-                    return false;
-                }
-                else
-                {
-                    return true;
-                }
-            }
-        }
-
         public Vector3[] Points
         {
             get
@@ -257,16 +260,15 @@ namespace Bim42HyparQto
 
         public Line[] GetExteriorLines()
         {
-            if (this.IsInnerCell) { return new Line[0]; }
             if (_row == 0 && _column == 0)
             {
                 return new Line[2] { new Line(_pts[3], _pts[0]), new Line(_pts[0], _pts[1]) };
             }
-            if (_row == _rowNum - 1 && _column == 0)
+            else if (_row == _rowNum - 1 && _column == 0)
             {
                 return new Line[2] { new Line(_pts[2], _pts[3]), new Line(_pts[3], _pts[0]) };
             }
-            if (_row == 0 && _column == _columnNum - 1)
+            else if (_row == 0 && _column == _columnNum - 1)
             {
                 return new Line[2] { new Line(_pts[0], _pts[1]), new Line(_pts[1], _pts[2]) };
             }
@@ -293,6 +295,47 @@ namespace Bim42HyparQto
             else
             {
                 return new Line[0];
+            }
+        }
+
+
+        public Line[] GetInteriorLines()
+        {
+            if (_row == 0 && _column == 0)
+            {
+                return new Line[2] { new Line(_pts[1], _pts[2]), new Line(_pts[2], _pts[3]) };
+            }
+            else if (_row == _rowNum - 1 && _column == 0)
+            {
+                return new Line[2] { new Line(_pts[0], _pts[1]), new Line(_pts[1], _pts[2]) };
+            }
+            else if (_row == 0 && _column == _columnNum - 1)
+            {
+                return new Line[2] { new Line(_pts[2], _pts[3]), new Line(_pts[3], _pts[0]) };
+            }
+            else if (_row == _rowNum - 1 && _column == _columnNum - 1)
+            {
+                return new Line[2] { new Line(_pts[3], _pts[0]), new Line(_pts[0], _pts[1]) };
+            }
+            else if (_row == 0)
+            {
+                return new Line[3] { new Line(_pts[1], _pts[2]), new Line(_pts[2], _pts[3]), new Line(_pts[3], _pts[0]) };
+            }
+            else if (_row == _rowNum - 1)
+            {
+                return new Line[3] { new Line(_pts[3], _pts[0]), new Line(_pts[0], _pts[1]), new Line(_pts[1], _pts[2]) };
+            }
+            else if (_column == 0)
+            {
+                return new Line[3] { new Line(_pts[0], _pts[1]), new Line(_pts[1], _pts[2]), new Line(_pts[2], _pts[3]) };
+            }
+            else if (_column == _columnNum - 1)
+            {
+                return new Line[3] { new Line(_pts[2], _pts[3]), new Line(_pts[3], _pts[0]), new Line(_pts[0], _pts[1]) };
+            }
+            else
+            {
+                return new Line[4] { new Line(_pts[1], _pts[2]), new Line(_pts[2], _pts[3]), new Line(_pts[3], _pts[0]), new Line(_pts[0], _pts[1]) };
             }
         }
 
