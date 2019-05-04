@@ -50,7 +50,6 @@ namespace Bim42HyparQto
 
             // Create the main grid of the building
             GridEx buildingGrid = new GridEx(southFacadeLine, northFacadeLine, uDistances, vDistances);
-
             ColoredSpaces(model, buildingGrid.TopCells,Colors.Green);
             ColoredSpaces(model, buildingGrid.BottomCells,Colors.Yellow);
             // ColoredSpaces(model, buildingGrid.LeftCells,Colors.Red);

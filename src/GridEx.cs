@@ -173,6 +173,18 @@ namespace Bim42HyparQto
             get { return _outerCells; }
         }
 
+        public Polyline GetOuterPolyline()
+        {
+            Vector3[] vertices = new Vector3[4] {
+                _bottom.Start,
+                _bottom.End,
+                _top.End,
+                _top.Start
+            };
+
+            return new Polyline(vertices);
+        }
+
         /// <summary>
         /// Construct a grid.
         /// </summary>
