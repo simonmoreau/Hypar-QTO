@@ -173,7 +173,7 @@ namespace Bim42HyparQto
             get { return _outerCells; }
         }
 
-        public Polyline GetOuterPolyline()
+        public Polygon GetOuterPolygon()
         {
             Vector3[] vertices = new Vector3[4] {
                 _bottom.Start,
@@ -182,7 +182,7 @@ namespace Bim42HyparQto
                 _top.Start
             };
 
-            return new Polyline(vertices);
+            return new Polygon(vertices);
         }
 
         /// <summary>

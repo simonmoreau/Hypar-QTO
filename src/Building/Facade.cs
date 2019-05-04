@@ -48,17 +48,25 @@ namespace Bim42HyparQto
             List<Cell> cells = buildingGrid.TopCells;
             cells.AddRange(buildingGrid.BottomCells);
 
-            foreach (Cell cell in cells)
+            Polygon outerPolygon = buildingGrid.GetOuterPolygon();
+            Line[] lines = GetPolygonLines(outerPolygon);
+
+            foreach (Line line in lines)
             {
-                for (int i = 0; i < cell.OuterLines.Length; i++)
+                if (line.Direction().IsParallelTo(Vector3.YAxis)) {continue;}
+                // Get the transform every module lenght
+                Transform[] transforms = GetTransformsAtDistance(line, _dim.ModuleLenght);
+
+                for (int i = 0; i < transforms.Length - 1; i++)
                 {
-                    Line line = cell.OuterLines[i];
-                    Vector3 towardInside = cell.TowardsInside[i];
+                    Transform transform = transforms[i];
+                    Transform nextTransform = transforms[i + 1];
+                    Vector3 towardInside = transform.XAxis.Negated();
                     Vector3[] facadeCell = new Vector3[] {
-                    line.Start,
-                    line.Start + levelHeight,
-                    line.End + levelHeight,
-                    line.End
+                    transform.Origin,
+                    transform.Origin + levelHeight,
+                    nextTransform.Origin + levelHeight,
+                    nextTransform.Origin
                     };
 
                     CreateFacadeModule(facadeCell, towardInside);
@@ -195,5 +203,32 @@ namespace Bim42HyparQto
 
             }
         }
+
+        private Line[] GetPolygonLines(Polygon polygon)
+        {
+            var result = new Line[polygon.Vertices.Length];
+            for (var i = 0; i < result.Length; i++)
+            {
+                Vector3 a = polygon.Vertices[i];
+
+                // Get the list of lines of the polygon
+                Vector3 b = i == polygon.Vertices.Length - 1 ? polygon.Vertices[0] : polygon.Vertices[i + 1];
+                result[i] = new Line(a, b);
+            }
+            return result;
+        }
+
+        private Transform[] GetTransformsAtDistance(Line line, double distance)
+        {
+
+            var result = new Transform[(int)Math.Floor(line.Length() / distance) + 1];
+            for (var i = 0; i < result.Length; i++)
+            {
+                result[i] = line.TransformAt(i * distance/line.Length());
+            }
+            result[(int)Math.Floor(line.Length() / distance)] = line.TransformAt(1);
+            return result;
+        }
+
     }
 }
