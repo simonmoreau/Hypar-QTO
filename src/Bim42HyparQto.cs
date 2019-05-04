@@ -45,7 +45,7 @@ namespace Bim42HyparQto
                 dim.CorridorWidth,
                 dim.CoreWidth,
                 dim.CorridorWidth,
-                dim.OfficeSpaceWidth - dim.CorridorWidth*2
+                dim.OfficeSpaceWidth - dim.CorridorWidth
             };
 
             // Create the main grid of the building
@@ -56,7 +56,7 @@ namespace Bim42HyparQto
             ColoredSpaces(model, buildingGrid.LeftCells,Colors.Red);
             ColoredSpaces(model, buildingGrid.RightCells,Colors.Blue);
 
-            structure.CreateStructure(buildingGrid);
+            structure.CreateStructure(buildingGrid, facade.FacadeThickness);
             facade.CreateFaçades(buildingGrid);
             
 

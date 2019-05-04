@@ -45,13 +45,15 @@ namespace Bim42HyparQto
         public void CreateFaçades(GridEx buildingGrid)
         {
             Vector3 levelHeight = Vector3.ZAxis * _dim.LevelHeight;
+            List<Cell> cells = buildingGrid.TopCells;
+            cells.AddRange(buildingGrid.BottomCells);
 
-            foreach (Cell outerCell in buildingGrid.OuterCells)
+            foreach (Cell cell in cells)
             {
-                for (int i = 0; i < outerCell.OuterLines.Length; i++)
+                for (int i = 0; i < cell.OuterLines.Length; i++)
                 {
-                    Line line = outerCell.OuterLines[i];
-                    Vector3 towardInside = outerCell.TowardsInside[i];
+                    Line line = cell.OuterLines[i];
+                    Vector3 towardInside = cell.TowardsInside[i];
                     Vector3[] facadeCell = new Vector3[] {
                     line.Start,
                     line.Start + levelHeight,

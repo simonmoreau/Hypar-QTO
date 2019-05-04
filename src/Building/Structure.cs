@@ -19,7 +19,7 @@ namespace Bim42HyparQto
         private double _column_diameter;
         private double _column_offset;
 
-        private FloorType slabType;
+        private FloorType _slabType;
         private StructuralFramingType _columnType;
         private StructuralFramingType _beamType;
 
@@ -38,7 +38,7 @@ namespace Bim42HyparQto
             List<MaterialLayer> slabMaterial = new List<MaterialLayer>() {
                 new MaterialLayer(BuiltInMaterials.Concrete,_slab_height)
             };
-            slabType = new FloorType("slab", slabMaterial);
+            _slabType = new FloorType("slab", slabMaterial);
 
             //Create columns types
             Profile circularColumnProfile = new Profile(Polygon.Circle(_column_diameter / 2));
@@ -55,17 +55,36 @@ namespace Bim42HyparQto
         // public double ColumnDiameter { get { return _column_diameter; } set { _column_diameter = value; } }
         // public double ColumnOffset { get { return _column_offset; } set { _column_offset = value; } }
 
-        public void CreateStructure(GridEx buildingGrid)
+        public void CreateStructure(GridEx buildingGrid, double facadeThickness)
         {
             List<Cell> bottomCells = buildingGrid.BottomCells;
-            CreateStructureAlignement(bottomCells);
+            CreateFraming(bottomCells, facadeThickness);
 
             List<Cell> topCells = buildingGrid.TopCells;
-            CreateStructureAlignement(topCells);
+            CreateFraming(topCells, facadeThickness);
 
+            // CreateSlab(buildingGrid,facadeThickness);
         }
 
-        private void CreateStructureAlignement(List<Cell> cells)
+        private void CreateSlab(GridEx buildingGrid, double facadeThickness)
+        {
+            Vector3[] buildingCell =new Vector3[4] {
+                buildingGrid.Cells[0,0].Points[0],
+                buildingGrid.Cells[0,buildingGrid.Cells.GetLength(1)-1].Points[1],
+                buildingGrid.Cells[buildingGrid.Cells.GetLength(0)-1,buildingGrid.Cells.GetLength(1)-1].Points[2],
+                buildingGrid.Cells[buildingGrid.Cells.GetLength(0)-1,0].Points[3]
+            };
+                        //Create a slab
+            Polygon polygon = new Polygon(buildingCell);
+            polygon = polygon.Offset(-facadeThickness)[0];
+            Plane polygonPlane = polygon.Plane();
+            Vector3 normal = polygonPlane.Normal;
+            if (normal.Z < 0) { polygon = polygon.Reversed(); }
+            Floor bottomFloor = new Floor(new Profile(polygon), _slabType, _dim.LevelHeight);
+            _model.AddElement(bottomFloor);
+        }
+
+        private void CreateFraming(List<Cell> cells, double facadeThickness)
         {
             Vector3 beamOrigin = null;
             bool startingCell = true;
@@ -78,26 +97,27 @@ namespace Bim42HyparQto
                 {
                     Cell currentCell = cells[i];
                     if (i != 0) { startingCell = false; }
-                    beamOrigin = CreateStructureInCell(currentCell, beamOrigin, startingCell);
+                    beamOrigin = CreateFramingInCell(currentCell, beamOrigin, startingCell, facadeThickness);
                 }
             }
 
             //Complete for the last module
-            beamOrigin = CreateStructureInCell(cells[cells.Count - 1], beamOrigin, false);
+            beamOrigin = CreateFramingInCell(cells[cells.Count - 1], beamOrigin, false, facadeThickness);
         }
 
-        private Vector3 CreateStructureInCell(Cell currentCell, Vector3 beamOrigin, bool startingCell)
+        private Vector3 CreateFramingInCell(Cell currentCell, Vector3 beamOrigin, bool startingCell, double facadeThickness)
         {
             Vector3 startingPoint = new Vector3();
             Vector3 endingPoint = new Vector3();
 
             Line[] lines = currentCell.OuterLines;
             Vector3 towardInside = currentCell.TowardsInside[0];
-            Vector3 columnOffset = towardInside * _column_offset;
+            double offset = facadeThickness + _column_offset;
+            Vector3 columnOffset = towardInside * offset;
 
             if (lines.Length == 2)
             {
-                columnOffset = currentCell.TowardsInside[1] * _column_offset + currentCell.TowardsInside[0] * _column_offset;
+                columnOffset = currentCell.TowardsInside[1] * offset + currentCell.TowardsInside[0] * offset;
                 if (startingCell)
                 {
                     startingPoint = lines[0].End;
