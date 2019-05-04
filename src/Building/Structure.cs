@@ -57,24 +57,33 @@ namespace Bim42HyparQto
 
         public void CreateStructure(GridEx buildingGrid)
         {
+            List<Cell> bottomCells = buildingGrid.BottomCells;
+            CreateStructureAlignement(bottomCells);
+
             List<Cell> topCells = buildingGrid.TopCells;
+            CreateStructureAlignement(topCells);
+
+        }
+
+        private void CreateStructureAlignement(List<Cell> cells)
+        {
             Vector3 beamOrigin = null;
             bool startingCell = true;
 
-            for (int i = 0; i < topCells.Count; i++)
+            for (int i = 0; i < cells.Count; i++)
             {
                 //Create a beam each 3 module
                 Math.DivRem(i, 3, out int remainer);
                 if (remainer == 0)
                 {
-                    Cell currentCell = topCells[i];
+                    Cell currentCell = cells[i];
                     if (i != 0) { startingCell = false; }
                     beamOrigin = CreateStructureInCell(currentCell, beamOrigin, startingCell);
                 }
             }
 
             //Complete for the last module
-            beamOrigin = CreateStructureInCell(topCells[topCells.Count - 1], beamOrigin, false);
+            beamOrigin = CreateStructureInCell(cells[cells.Count - 1], beamOrigin, false);
         }
 
         private Vector3 CreateStructureInCell(Cell currentCell, Vector3 beamOrigin, bool startingCell)
@@ -82,35 +91,32 @@ namespace Bim42HyparQto
             Vector3 startingPoint = new Vector3();
             Vector3 endingPoint = new Vector3();
 
-            Line[] lines = currentCell.GetExteriorLines();
+            Line[] lines = currentCell.OuterLines;
+            Vector3 towardInside = currentCell.TowardsInside[0];
+            Vector3 columnOffset = towardInside * _column_offset;
+
             if (lines.Length == 2)
             {
+                columnOffset = currentCell.TowardsInside[1] * _column_offset + currentCell.TowardsInside[0] * _column_offset;
                 if (startingCell)
                 {
                     startingPoint = lines[0].End;
-                    endingPoint = lines[1].End;
+                    towardInside = currentCell.TowardsInside[1];
                 }
                 else
                 {
                     startingPoint = lines[0].End;
-                    endingPoint = lines[0].Start;
+                    towardInside = towardInside.Negated();
                 }
             }
             else
             {
                 startingPoint = lines[0].Start;
-                endingPoint = lines[0].End;
             }
 
-            Plane facadeCellPlane = new Plane(startingPoint, endingPoint, startingPoint + Vector3.ZAxis);
-            Vector3 towardInside = facadeCellPlane.Normal.Normalized();
-
             double column_height = _dim.LevelHeight - _beam_height;
-            Vector3 columnOffset = towardInside * _column_offset;
             Column circularColumn = new Column(startingPoint + columnOffset, column_height, _columnType, null, 0, 0);
             _model.AddElement(circularColumn);
-
-
 
             Vector3 beamElevation = new Vector3(0, 0, _dim.LevelHeight - _slab_height - (_beam_height - _slab_height) / 2);
             if (beamOrigin == null)

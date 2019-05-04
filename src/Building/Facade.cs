@@ -30,12 +30,12 @@ namespace Bim42HyparQto
             _facade_thickness = 0.4;
 
             //Create types
-                        List<MaterialLayer> façadeMaterialLayers = new List<MaterialLayer>(){
+            List<MaterialLayer> façadeMaterialLayers = new List<MaterialLayer>(){
                 new MaterialLayer(BuiltInMaterials.Glass, _facade_thickness)
             };
             _facadeType = new WallType("façade", façadeMaterialLayers);
 
-                        //Create mullion types
+            //Create mullion types
             Profile mullionProfile = new Profile(Polygon.Rectangle(0.03, 0.1));
             _mullionType = new StructuralFramingType("Mullion", mullionProfile, BuiltInMaterials.Steel);
         }
@@ -48,17 +48,16 @@ namespace Bim42HyparQto
 
             foreach (Cell outerCell in buildingGrid.OuterCells)
             {
-                foreach (Line line in outerCell.GetExteriorLines())
+                for (int i = 0; i < outerCell.OuterLines.Length; i++)
                 {
+                    Line line = outerCell.OuterLines[i];
+                    Vector3 towardInside = outerCell.TowardsInside[i];
                     Vector3[] facadeCell = new Vector3[] {
                     line.Start,
                     line.Start + levelHeight,
                     line.End + levelHeight,
                     line.End
                     };
-
-                    Plane facadeCellPlane = new Plane(line.Start, line.Start + levelHeight, line.End);
-                    Vector3 towardInside = facadeCellPlane.Normal.Normalized();
 
                     CreateFacadeModule(facadeCell, towardInside);
                 }

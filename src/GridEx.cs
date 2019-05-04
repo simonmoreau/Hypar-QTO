@@ -232,6 +232,9 @@ namespace Bim42HyparQto
         private int _column;
         private int _rowNum;
         private int _columnNum;
+        private Line[] _innerLines;
+        private Line[] _outerLines;
+        private Vector3[] _towardsInside;
 
         /// <summary>
         /// Construct a cell.
@@ -248,6 +251,7 @@ namespace Bim42HyparQto
             _rowNum = rowNum;
             _column = column;
             _columnNum = columnNum;
+            CreateLines();
         }
 
         public Vector3[] Points
@@ -258,84 +262,66 @@ namespace Bim42HyparQto
             }
         }
 
-        public Line[] GetExteriorLines()
+        public Line[] InnerLines { get { return _innerLines;}}
+        public Line[] OuterLines { get { return _outerLines;}}
+        public Vector3[] TowardsInside { get { return _towardsInside;}}
+
+
+        private void CreateLines()
         {
             if (_row == 0 && _column == 0)
             {
-                return new Line[2] { new Line(_pts[3], _pts[0]), new Line(_pts[0], _pts[1]) };
+                _innerLines =  new Line[2] { new Line(_pts[1], _pts[2]), new Line(_pts[2], _pts[3]) };
+                _outerLines =  new Line[2] { new Line(_pts[3], _pts[0]), new Line(_pts[0], _pts[1]) };
+                _towardsInside = new Vector3[2] { (_pts[1]-_pts[0]).Normalized(),(_pts[2]-_pts[1]).Normalized()};
             }
             else if (_row == _rowNum - 1 && _column == 0)
             {
-                return new Line[2] { new Line(_pts[2], _pts[3]), new Line(_pts[3], _pts[0]) };
+                _innerLines =  new Line[2] { new Line(_pts[0], _pts[1]), new Line(_pts[1], _pts[2]) };
+                _outerLines =  new Line[2] { new Line(_pts[2], _pts[3]), new Line(_pts[3], _pts[0]) };
+                _towardsInside = new Vector3[2] { (_pts[0]-_pts[3]).Normalized(),(_pts[1]-_pts[0]).Normalized()};
             }
             else if (_row == 0 && _column == _columnNum - 1)
             {
-                return new Line[2] { new Line(_pts[0], _pts[1]), new Line(_pts[1], _pts[2]) };
+                _innerLines =  new Line[2] { new Line(_pts[2], _pts[3]), new Line(_pts[3], _pts[0]) };
+                _outerLines =  new Line[2] { new Line(_pts[0], _pts[1]), new Line(_pts[1], _pts[2]) };
+                _towardsInside = new Vector3[2] { (_pts[2]-_pts[1]).Normalized(),(_pts[3]-_pts[2]).Normalized()};
             }
             else if (_row == _rowNum - 1 && _column == _columnNum - 1)
             {
-                return new Line[2] { new Line(_pts[1], _pts[2]), new Line(_pts[2], _pts[3]) };
+                _innerLines =  new Line[2] { new Line(_pts[3], _pts[0]), new Line(_pts[0], _pts[1]) };
+                _outerLines =  new Line[2] { new Line(_pts[1], _pts[2]), new Line(_pts[2], _pts[3]) };
+                _towardsInside = new Vector3[2] { (_pts[3]-_pts[2]).Normalized(),(_pts[0]-_pts[3]).Normalized()};
             }
             else if (_row == 0)
             {
-                return new Line[1] { new Line(_pts[0], _pts[1]) };
+                _innerLines =  new Line[3] { new Line(_pts[1], _pts[2]), new Line(_pts[2], _pts[3]), new Line(_pts[3], _pts[0]) };
+                _outerLines =  new Line[1] { new Line(_pts[0], _pts[1]) };
+                _towardsInside = new Vector3[1] { (_pts[2]-_pts[1]).Normalized()};
             }
             else if (_row == _rowNum - 1)
             {
-                return new Line[1] { new Line(_pts[2], _pts[3]) };
+                _innerLines =  new Line[3] { new Line(_pts[3], _pts[0]), new Line(_pts[0], _pts[1]), new Line(_pts[1], _pts[2]) };
+                _outerLines =  new Line[1] { new Line(_pts[2], _pts[3]) };
+                _towardsInside = new Vector3[1] { (_pts[0]-_pts[3]).Normalized()};
             }
             else if (_column == 0)
             {
-                return new Line[1] { new Line(_pts[3], _pts[0]) };
+                _innerLines =  new Line[3] { new Line(_pts[0], _pts[1]), new Line(_pts[1], _pts[2]), new Line(_pts[2], _pts[3]) };
+                _outerLines =  new Line[1] { new Line(_pts[3], _pts[0]) };
+                _towardsInside = new Vector3[1] { (_pts[1]-_pts[0]).Normalized()};
             }
             else if (_column == _columnNum - 1)
             {
-                return new Line[1] { new Line(_pts[1], _pts[2]) };
+                _innerLines =  new Line[3] { new Line(_pts[2], _pts[3]), new Line(_pts[3], _pts[0]), new Line(_pts[0], _pts[1]) };
+                _outerLines =  new Line[1] { new Line(_pts[1], _pts[2]) };
+                _towardsInside = new Vector3[1] { (_pts[3]-_pts[2]).Normalized()};
             }
             else
             {
-                return new Line[0];
-            }
-        }
-
-
-        public Line[] GetInteriorLines()
-        {
-            if (_row == 0 && _column == 0)
-            {
-                return new Line[2] { new Line(_pts[1], _pts[2]), new Line(_pts[2], _pts[3]) };
-            }
-            else if (_row == _rowNum - 1 && _column == 0)
-            {
-                return new Line[2] { new Line(_pts[0], _pts[1]), new Line(_pts[1], _pts[2]) };
-            }
-            else if (_row == 0 && _column == _columnNum - 1)
-            {
-                return new Line[2] { new Line(_pts[2], _pts[3]), new Line(_pts[3], _pts[0]) };
-            }
-            else if (_row == _rowNum - 1 && _column == _columnNum - 1)
-            {
-                return new Line[2] { new Line(_pts[3], _pts[0]), new Line(_pts[0], _pts[1]) };
-            }
-            else if (_row == 0)
-            {
-                return new Line[3] { new Line(_pts[1], _pts[2]), new Line(_pts[2], _pts[3]), new Line(_pts[3], _pts[0]) };
-            }
-            else if (_row == _rowNum - 1)
-            {
-                return new Line[3] { new Line(_pts[3], _pts[0]), new Line(_pts[0], _pts[1]), new Line(_pts[1], _pts[2]) };
-            }
-            else if (_column == 0)
-            {
-                return new Line[3] { new Line(_pts[0], _pts[1]), new Line(_pts[1], _pts[2]), new Line(_pts[2], _pts[3]) };
-            }
-            else if (_column == _columnNum - 1)
-            {
-                return new Line[3] { new Line(_pts[2], _pts[3]), new Line(_pts[3], _pts[0]), new Line(_pts[0], _pts[1]) };
-            }
-            else
-            {
-                return new Line[4] { new Line(_pts[1], _pts[2]), new Line(_pts[2], _pts[3]), new Line(_pts[3], _pts[0]), new Line(_pts[0], _pts[1]) };
+                _innerLines =  new Line[4] { new Line(_pts[1], _pts[2]), new Line(_pts[2], _pts[3]), new Line(_pts[3], _pts[0]), new Line(_pts[0], _pts[1]) };
+                _outerLines =  new Line[0];
+                _towardsInside = new Vector3[0];
             }
         }
 
