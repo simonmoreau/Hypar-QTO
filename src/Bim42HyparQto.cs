@@ -25,14 +25,14 @@ namespace Bim42HyparQto
             double area = 5;
 
             // Create the buildings spaces
-            Spaces spaces = new Spaces(model);
-            spaces.Headroom = input.Headroom;
+            Interior interior = new Interior(model, dim);
+            interior.Headroom = input.Headroom;
 
             // Create the building structure
             Structure structure = new Structure(model,dim);
 
             // Create building façades
-            Facade facade = new Facade(model, dim, spaces, structure);
+            Facade facade = new Facade(model, dim, interior, structure);
 
             Line northFacadeLine = new Line(new Vector3(0, dim.Width, 0), new Vector3(dim.Lenght, dim.Width, 0));
             Line southFacadeLine = new Line(new Vector3(0, 0, 0), new Vector3(dim.Lenght, 0, 0));
@@ -53,12 +53,12 @@ namespace Bim42HyparQto
 
             ColoredSpaces(model, buildingGrid.TopCells,Colors.Green);
             ColoredSpaces(model, buildingGrid.BottomCells,Colors.Yellow);
-            ColoredSpaces(model, buildingGrid.LeftCells,Colors.Red);
-            ColoredSpaces(model, buildingGrid.RightCells,Colors.Blue);
+            // ColoredSpaces(model, buildingGrid.LeftCells,Colors.Red);
+            // ColoredSpaces(model, buildingGrid.RightCells,Colors.Blue);
 
             structure.CreateStructure(buildingGrid, facade.FacadeThickness);
             facade.CreateFaçades(buildingGrid);
-            
+            interior.CreateInterior(buildingGrid, facade.FacadeThickness);
 
             Column column = new Column(new Vector3(0,0,0),10, structure.ColumnType);
             model.AddElement(column);

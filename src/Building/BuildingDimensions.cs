@@ -27,7 +27,7 @@ namespace Bim42HyparQto
 
         private BuildingDimensions()
         {
-            _module_number = 20;
+            _module_number = 23;
             _width = 18.5;
             _core_width = 5;
             _corridor_width = 1.5;

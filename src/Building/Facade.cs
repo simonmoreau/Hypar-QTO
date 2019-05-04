@@ -15,13 +15,13 @@ namespace Bim42HyparQto
         private Model _model;
         private BuildingDimensions _dim;
         private Structure _structure;
-        private Spaces _spaces;
+        private Interior _spaces;
         private double _facade_thickness;
 
         private WallType _facadeType;
         private StructuralFramingType _mullionType;
 
-        public Facade(Model model, BuildingDimensions dim, Spaces spaces, Structure structure)
+        public Facade(Model model, BuildingDimensions dim, Interior spaces, Structure structure)
         {
             _model = model;
             _dim = dim;
