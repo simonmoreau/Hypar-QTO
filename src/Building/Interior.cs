@@ -80,7 +80,7 @@ namespace Bim42HyparQto
                 buildingGrid.Cells[dim0,0].Points[3] + facadeOffset
             };
 
-            CreateFloor(officeCellBottom, _ceillingType, _ceiling_thickness + _headroom);
+            CreateFloor(officeCellBottom, _ceillingType, _ceiling_thickness + _headroom + _raised_floor_thickness + _raised_floor_void_height);
             CreateFloor(officeCellBottom, _raisedFloorType, _raised_floor_thickness + _raised_floor_void_height);
 
             facadeOffset = (buildingGrid.Cells[0,dim1 -1].Points[0] - buildingGrid.Cells[0,dim1].Points[1]).Normalized() * facadeThickness;
@@ -91,7 +91,7 @@ namespace Bim42HyparQto
                 buildingGrid.Cells[dim0,dim1-1].Points[3]
             };
 
-            CreateFloor(officeCellTop, _ceillingType, _ceiling_thickness + _headroom);
+            CreateFloor(officeCellTop, _ceillingType, _ceiling_thickness + _headroom + _raised_floor_thickness + _raised_floor_void_height);
             CreateFloor(officeCellTop, _raisedFloorType, _raised_floor_thickness + _raised_floor_void_height);
 
         }

@@ -97,7 +97,7 @@ namespace Bim42HyparQto
 
             Transform panelTransform = new Transform(innerCell[0], innerCell[3] - innerCell[0], innerVector.Negated());
             double leftThickness = panelsDimensions[panelNumber, 0];
-            double topThickness = _spaces.CeilingVoidHeight + _spaces.CeilingVoidHeight + _structure.BeamHeight;
+            double topThickness = _spaces.CeilingVoidHeight + _spaces.CeilingThickness + _structure.BeamHeight;
             double rightThickness = panelsDimensions[panelNumber, 1];
             double bottomThickness = _spaces.RaisedFloorVoidHeight + _spaces.RaisedFloorThickness;
             Vector3[] glassCell = new Vector3[4];
