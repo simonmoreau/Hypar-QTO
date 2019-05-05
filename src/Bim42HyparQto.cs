@@ -59,6 +59,12 @@ namespace Bim42HyparQto
             facade.CreateFaçades(buildingGrid);
             interior.CreateInterior(buildingGrid, facade.FacadeThickness);
 
+            // Create a stair
+            Stair stair = new Stair(model, dim.LevelHeight,0.2,3);
+            Vector3 direction  = Vector3.XAxis;
+            stair.CreateStair(buildingGrid.Cells[5,2].Points[0],direction);
+            
+
             Column column = new Column(new Vector3(0,0,0),10, structure.ColumnType);
             model.AddElement(column);
             // CreateFloors(model, buildingGrid);

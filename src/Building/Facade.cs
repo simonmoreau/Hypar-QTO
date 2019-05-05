@@ -49,13 +49,13 @@ namespace Bim42HyparQto
             cells.AddRange(buildingGrid.BottomCells);
 
             Polygon outerPolygon = buildingGrid.GetOuterPolygon();
-            Line[] lines = GetPolygonLines(outerPolygon);
+            Line[] lines = Helper.GetPolygonLines(outerPolygon);
 
             foreach (Line line in lines)
             {
                 if (line.Direction().IsParallelTo(Vector3.YAxis)) {continue;}
                 // Get the transform every module lenght
-                Transform[] transforms = GetTransformsAtDistance(line, _dim.ModuleLenght);
+                Transform[] transforms = Helper.GetTransformsAtDistance(line, _dim.ModuleLenght);
 
                 for (int i = 0; i < transforms.Length - 1; i++)
                 {
@@ -204,31 +204,6 @@ namespace Bim42HyparQto
             }
         }
 
-        private Line[] GetPolygonLines(Polygon polygon)
-        {
-            var result = new Line[polygon.Vertices.Length];
-            for (var i = 0; i < result.Length; i++)
-            {
-                Vector3 a = polygon.Vertices[i];
-
-                // Get the list of lines of the polygon
-                Vector3 b = i == polygon.Vertices.Length - 1 ? polygon.Vertices[0] : polygon.Vertices[i + 1];
-                result[i] = new Line(a, b);
-            }
-            return result;
-        }
-
-        private Transform[] GetTransformsAtDistance(Line line, double distance)
-        {
-
-            var result = new Transform[(int)Math.Floor(line.Length() / distance) + 1];
-            for (var i = 0; i < result.Length; i++)
-            {
-                result[i] = line.TransformAt(i * distance/line.Length());
-            }
-            result[(int)Math.Floor(line.Length() / distance)] = line.TransformAt(1);
-            return result;
-        }
 
     }
 }
