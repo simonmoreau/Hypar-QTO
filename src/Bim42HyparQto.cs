@@ -50,8 +50,8 @@ namespace Bim42HyparQto
 
             // Create the main grid of the building
             GridEx buildingGrid = new GridEx(southFacadeLine, northFacadeLine, uDistances, vDistances);
-            ColoredSpaces(model, buildingGrid.TopCells,Colors.Green);
-            ColoredSpaces(model, buildingGrid.BottomCells,Colors.Yellow);
+            // ColoredSpaces(model, buildingGrid.TopCells,Colors.Green);
+            // ColoredSpaces(model, buildingGrid.BottomCells,Colors.Yellow);
             // ColoredSpaces(model, buildingGrid.LeftCells,Colors.Red);
             // ColoredSpaces(model, buildingGrid.RightCells,Colors.Blue);
 
@@ -62,7 +62,7 @@ namespace Bim42HyparQto
             // Create a stair
             Stair stair = new Stair(model, dim.LevelHeight,0.2,3);
             Vector3 direction  = Vector3.XAxis;
-            stair.CreateStair(buildingGrid.Cells[5,2].Points[0],direction);
+            stair.PlaceStair(buildingGrid.Cells[5,2].Points[0],direction);
             
 
             Column column = new Column(new Vector3(0,0,0),10, structure.ColumnType);
