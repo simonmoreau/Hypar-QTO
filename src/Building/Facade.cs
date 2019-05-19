@@ -110,7 +110,7 @@ namespace Bim42HyparQto
 
             Material facadePanelMaterial = new Material("facadeMaterial", Colors.White, (float)0.1, (float)0.1, true);
 
-            Panel glassPanel = new Panel(glassCell, BuiltInMaterials.Glass);
+            Panel glassPanel = new Panel(glassPolygon, BuiltInMaterials.Glass);
             _model.AddElement(glassPanel);
 
             Vector3 mullionStart = glassCell[0] + new Vector3(0, 0, 1);
@@ -123,28 +123,28 @@ namespace Bim42HyparQto
             {
                 int j = i + 1;
                 if (i == 3) { j = 0; }
-                Panel panel = new Panel(new Vector3[] {
+                Panel panel = new Panel(new Polygon(new Vector3[] {
                 innerCell[i],
                 facadeCell[i],
                 facadeCell[j],
                 innerCell[j]
-            }, facadePanelMaterial);
+            }), facadePanelMaterial);
                 _model.AddElement(panel);
 
-                Panel sidePanel = new Panel(new Vector3[] {
+                Panel sidePanel = new Panel(new Polygon(new Vector3[] {
                 glassCell[i],
                 facadeCell[i],
                 facadeCell[j],
                 glassCell[j]
-            }, facadePanelMaterial);
+            }), facadePanelMaterial);
                 _model.AddElement(sidePanel);
 
-                Panel innerPannel = new Panel(new Vector3[] {
+                Panel innerPannel = new Panel(new Polygon(new Vector3[] {
                 glassCell[i],
                 innerCell[i],
                 innerCell[j],
                 glassCell[j]
-            }, facadePanelMaterial);
+            }), facadePanelMaterial);
                 _model.AddElement(innerPannel);
             }
 
@@ -189,12 +189,12 @@ namespace Bim42HyparQto
                     Vector3 rightDown = mullionCell[3] + panelTransform.OfVector(new Vector3(-0.05, mullionsElevation[i] + 0.05, 0));
                     Vector3 leftUp = mullionCell[0] + panelTransform.OfVector(new Vector3(0.05, mullionsElevation[i + 1] - 0.05, 0));
                     Vector3 rightUp = mullionCell[3] + panelTransform.OfVector(new Vector3(-0.05, mullionsElevation[i + 1] - 0.05, 0));
-                    Panel innerPannel = new Panel(new Vector3[] {
+                    Panel innerPannel = new Panel(new Polygon(new Vector3[] {
                 leftDown,
                 leftUp,
                 rightUp,
                 rightDown
-            }, facadePanelMaterial);
+            }), facadePanelMaterial);
                     _model.AddElement(innerPannel);
                 }
 

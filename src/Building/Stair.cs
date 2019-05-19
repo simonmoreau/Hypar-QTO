@@ -84,6 +84,7 @@ namespace Bim42HyparQto
 
             firstLandingPolygon = _currentTransform.OfPolygon(firstLandingPolygon);
             Floor firstLanding = new Floor(firstLandingPolygon, landingType);
+
             _model.AddElement(firstLanding);
 
 
@@ -95,11 +96,12 @@ namespace Bim42HyparQto
             });
 
             Polygon wallPolygon = stairCasePolygon.Offset(-_wallThickness / 2)[0];
-            wallPolygon = _currentTransform.OfPolygon(wallPolygon);
+            Vector3 height = Vector3.ZAxis * _levelHeight;
 
             foreach (Line line in Helper.GetPolygonLines(wallPolygon))
             {
-                Wall stairCaseWall = new Wall(line, stairWallType, _levelHeight);
+                Polygon wallProfile = new Polygon(new Vector3[] { line.Start, line.Start + height, line.End + height, line.End });
+                StandardWall stairCaseWall = new StandardWall(line, stairWallType, _levelHeight,null, _currentTransform);
                 _model.AddElement(stairCaseWall);
             }
 
@@ -107,13 +109,27 @@ namespace Bim42HyparQto
             Vector3 pt2 = pt1 + coreWallLenght;
             Line coreWallLine = new Line(pt1, pt2);
 
-            coreWallLine = _currentTransform.OfLine(coreWallLine);
-            Wall coreWall = new Wall(coreWallLine, stairWallType, _levelHeight);
+            Polygon coreWallProfile = new Polygon(new Vector3[] { pt1, pt1 + height, pt2 + height, pt2 });
+            StandardWall coreWall = new StandardWall(coreWallLine, stairWallType, _levelHeight, null, _currentTransform);
             _model.AddElement(coreWall);
 
+            // CreateOpening();
 
 
+        }
 
+        public void CreateOpening()
+        {
+            double width = CodeDuTravail.ConvertUpToMeter(_upNumber);
+            double height = 2;
+            Polygon openingPolygon = Polygon.Rectangle(width, height);
+            Opening opening = new Opening(openingPolygon);
+
+            List<Floor> floors = _model.ElementsOfType<Floor>().ToList();
+            foreach (Floor floor in floors)
+            {
+                floor.Openings.Append(opening); // System.ArgumentNullException : Value cannot be null.
+            }
         }
 
         public void CreateStairRun(int riser_number, Vector3 basePoint, Vector3 direction)
@@ -160,14 +176,16 @@ namespace Bim42HyparQto
             Transform transform = new Transform(transformMatrix);
             transform.Concatenate(new Transform(basePoint, direction.Normalized(), Vector3.ZAxis));
             transform.Concatenate(_currentTransform);
-            polygon = transform.OfPolygon(polygon);
-            runWidthDirection = transform.OfVector(runWidthDirection);
+            //polygon = transform.OfPolygon(polygon);
+            //runWidthDirection = transform.OfVector(runWidthDirection);
 
             Solid solid = Solid.SweepFace(polygon, new Polygon[] { }, runWidthDirection, stairRunWidth);
 
+            Mass test = new Mass(polygon, stairRunWidth,BuiltInMaterials.Concrete, transform);
 
-            Wall test = new Wall(new Solid[] { solid }, new WallType("test", 0.1));
+            // Wall test = new Wall(new Solid[] { solid }, new WallType("test", 0.1));
             _model.AddElement(test);
+
 
         }
 

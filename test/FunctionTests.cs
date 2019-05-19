@@ -59,6 +59,7 @@ namespace Bim42HyparQto
 
             // Output the model to the live directory.
             // This will enable 
+            // GltfExtensions.ToGlTF(output.Model,"../../../../live/models/model.glb",true);
             output.Model.ToGlTF("../../../../live/models/model.glb");
             // output.Model.ToIFC("../../../../live/models/model.ifc");
 

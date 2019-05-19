@@ -80,7 +80,7 @@ namespace Bim42HyparQto
             Plane polygonPlane = polygon.Plane();
             Vector3 normal = polygonPlane.Normal;
             if (normal.Z < 0) { polygon = polygon.Reversed(); }
-            Floor bottomFloor = new Floor(new Profile(polygon), _slabType, _dim.LevelHeight);
+            Floor bottomFloor = new Floor(polygon, _slabType, _dim.LevelHeight);
             _model.AddElement(bottomFloor);
         }
 
